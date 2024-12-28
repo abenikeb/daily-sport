@@ -165,7 +165,7 @@ export function AdminSidebar() {
 											<SidebarMenuButton
 												className={cn(
 													"w-full justify-between text-orange-800 hover:bg-orange-200 hover:text-orange-600 transition-colors duration-200",
-													pathname.startsWith(item.href) &&
+													(pathname as any).startsWith(item.href) &&
 														"bg-orange-200 text-orange-600 font-semibold"
 												)}>
 												<div className="flex items-center">
