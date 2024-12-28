@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(uuid())
+  email          String         @unique
+  password       String
+  name           String
+  role           Role           @default(USER)
+  profilePicture String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  articles       Article[]
+  comments       Comment[]
+  likes          Like[]         @relation(name: "UserToLikes")
+  notifications  Notification[] @relation(name: "UserToNotifications")
+}
+
+enum Role {
+  USER
+  WRITER
+  ADMIN
+}
+
+model Category {
+  id            String        @id @default(uuid())
+  name          String        @unique
+  articles      Article[]
+  subcategories Subcategory[]
+}
+
+model Subcategory {
+  id         String    @id @default(uuid())
+  name       String
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id])
+  articles   Article[]
+
+  @@unique([name, categoryId])
+}
+
+model Tag {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  articles Article[]
+}
+
+model Article {
+  id            String        @id @default(uuid())
+  title         String
+  content       Json // Stores multilingual content
+  authorId      String
+  author        User          @relation(fields: [authorId], references: [id])
+  categoryId    String
+  category      Category      @relation(fields: [categoryId], references: [id])
+  subcategoryId String?
+  subcategory   Subcategory?  @relation(fields: [subcategoryId], references: [id])
+  tags          Tag[]
+  status        ArticleStatus @default(PENDING)
+  featuredImage String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  comments      Comment[]
+  likes         Like[]
+}
+
+enum ArticleStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], name: "UserToLikes")
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, articleId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], name: "UserToNotifications")
+  type      NotificationType
+  content   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+}
+
+enum NotificationType {
+  ARTICLE_APPROVED
+  ARTICLE_REJECTED
+  NEW_COMMENT
+  NEW_LIKE
+}

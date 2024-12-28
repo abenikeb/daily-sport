@@ -1,15 +1,17 @@
 {
-	"name": "Music Service",
+	"name": "Daily Sport",
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
-		"lint": "next lint"
+		"lint": "next lint",
+		"seed": "node -r ts-node/register ./prisma/seed.ts"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^3.9.0",
+		"@prisma/client": "^6.1.0",
 		"@radix-ui/react-avatar": "^1.1.0",
 		"@radix-ui/react-checkbox": "^1.1.2",
 		"@radix-ui/react-collapsible": "^1.1.2",
@@ -24,7 +26,7 @@
 		"@radix-ui/react-slider": "^1.2.1",
 		"@radix-ui/react-slot": "^1.1.1",
 		"@radix-ui/react-tabs": "^1.1.0",
-		"@radix-ui/react-toast": "^1.2.1",
+		"@radix-ui/react-toast": "^1.2.4",
 		"@radix-ui/react-toggle": "^1.1.0",
 		"@radix-ui/react-tooltip": "^1.1.6",
 		"axios": "^1.7.7",
@@ -48,12 +50,19 @@
 		"tailwindcss-animate": "^1.0.7",
 		"zod": "^3.23.8"
 	},
+	"type": "module",
 	"devDependencies": {
-		"@types/node": "^20",
+		"@types/node": "^20.17.10",
 		"@types/react": "^18",
 		"@types/react-dom": "^18",
 		"postcss": "^8",
+		"prisma": "^6.1.0",
 		"tailwindcss": "^3.4.1",
-		"typescript": "^5"
+		"ts-node": "^10.9.2",
+		"tsx": "^4.19.2",
+		"typescript": "^5.7.2"
+	},
+	"prisma": {
+		"seed": "ts-node ./prisma/seed.ts"
 	}
 }

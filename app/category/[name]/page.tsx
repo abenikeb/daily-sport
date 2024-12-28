@@ -12,7 +12,7 @@ export default function CategoryPage({ params }: { params: { name: string } }) {
 	const { t } = useLanguage();
 
 	return (
-		<div className="max-w-md mx-auto bg-gray-50 min-h-screen flex flex-col">
+		<div className="w-full bg-gray-50 min-h-screen flex flex-col">
 			{/* Header */}
 			<header className="sticky top-0 bg-white p-4 flex justify-between items-center border-b border-gray-200 shadow-sm">
 				<Link href="/">

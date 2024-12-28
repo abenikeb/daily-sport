@@ -13,7 +13,7 @@ export function BottomNavigation({
 	const { t } = useLanguage();
 
 	return (
-		<nav className="bg-white border-t border-gray-200 flex justify-around py-2">
+		<nav className="bg-white border-t border-gray-200 flex justify-around py-2 fixed bottom-0 left-0 right-0">
 			<Link href="/">
 				<Button
 					variant="ghost"

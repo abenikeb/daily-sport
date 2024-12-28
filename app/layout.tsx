@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { Raleway as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils";
-import Footer from "@components/shared/footer";
 import Provider from "@/components/Provider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-import "./globals.css";
 import Image from "@node_modules/next/image";
 import { SidebarDrawer } from "@components/SidebarDrawer";
+import { BottomNavigation } from "@components/BottomNavigation";
+import { Toaster } from "@/components/ui/toaster";
+import "./globals.css";
 
 const fontSans = FontSans({
 	subsets: ["latin"],
@@ -37,8 +37,8 @@ export default function RootLayout({
 							"min-h-screen bg-background font-sans antialiased",
 							fontSans.variable
 						)}>
-						<div className="max-w-md mx-auto bg-gray-100 min-h-screen flex flex-col">
-							<header className="bg-white p-4 flex justify-between items-center shadow-lg">
+						<div className="mx-auto bg-gray-100 min-h-screen flex flex-col">
+							<header className="bg-white px-4 py-2 flex justify-between items-center border-b-[1px]">
 								{/* <div className="w-8 h-8 bg-red-500 rounded-full"></div> */}
 								<div className="flex items-center">
 									<SidebarDrawer />
@@ -59,7 +59,10 @@ export default function RootLayout({
 									<LanguageSelector />
 								</div>
 							</header>
+							<Toaster />
 							{children}
+
+							<BottomNavigation active="home" />
 						</div>
 					</body>
 				</LanguageProvider>
