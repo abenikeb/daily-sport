@@ -50,7 +50,7 @@ export default function SubcategoryPage({
 				))}
 			</div>
 
-			<BottomNavigation active="categories" />
+			<BottomNavigation />
 		</div>
 	);
 }

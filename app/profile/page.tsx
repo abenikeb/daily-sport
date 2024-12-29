@@ -60,7 +60,7 @@ export default function ProfilePage() {
 			</div>
 
 			{/* Bottom Navigation */}
-			<BottomNavigation active="profile" />
+			<BottomNavigation />
 		</div>
 	);
 }
