@@ -10,6 +10,7 @@ import Image from "@node_modules/next/image";
 import { SidebarDrawer } from "@components/SidebarDrawer";
 import { BottomNavigation } from "@components/BottomNavigation";
 import { Toaster } from "@/components/ui/toaster";
+import Link from "@node_modules/next/link";
 import "./globals.css";
 
 const fontSans = FontSans({
@@ -40,15 +41,17 @@ export default function RootLayout({
 						<div className="mx-auto bg-gray-100 min-h-screen flex flex-col">
 							<header className="bg-white px-4 py-2 flex justify-between items-center border-b-[1px]">
 								{/* <div className="w-8 h-8 bg-red-500 rounded-full"></div> */}
-								<div className="flex items-center">
+								<div className="flex items-center justify-center">
 									<SidebarDrawer />
-									<Image
-										src="/assets/images/logo-sheger-walk.png"
-										alt="Daily Sport News Logo"
-										width={90}
-										height={80}
-										className=""
-									/>
+									<Link href="/">
+										<Image
+											src="/assets/images/logo-sheger-walk.png"
+											alt="Daily Sport News Logo"
+											width={90}
+											height={80}
+											className=""
+										/>
+									</Link>
 								</div>
 
 								<div className="flex justify-between items-center">
@@ -62,7 +65,7 @@ export default function RootLayout({
 							<Toaster />
 							{children}
 
-							<BottomNavigation active="home" />
+							<BottomNavigation />
 						</div>
 					</body>
 				</LanguageProvider>

@@ -1,57 +1,75 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, Trophy, User, Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-export function BottomNavigation({
-	active,
-}: {
-	active: "home" | "categories" | "profile" | "more";
-}) {
+type NavItem = {
+	name: string;
+	href: string;
+	icon: React.ElementType;
+};
+
+const navItems: NavItem[] = [
+	{ name: "home", href: "/", icon: Home },
+	{ name: "categories", href: "/category/all", icon: Trophy },
+	{ name: "profile", href: "/profile", icon: User },
+	{ name: "more", href: "/more", icon: Menu },
+];
+
+export function BottomNavigation() {
 	const { t } = useLanguage();
+	const pathname = usePathname();
+	const router = useRouter();
+	const [active, setActive] = useState<string>("home");
+
+	useEffect(() => {
+		const currentItem =
+			navItems.find((item) => pathname?.startsWith(item.href)) || navItems[0];
+		setActive(currentItem.name);
+	}, [pathname]);
+
+	const handleNavClick = (item: NavItem) => {
+		setActive(item.name);
+		router.push(item.href);
+	};
 
 	return (
-		<nav className="bg-white border-t border-gray-200 flex justify-around py-2 fixed bottom-0 left-0 right-0">
-			<Link href="/">
-				<Button
-					variant="ghost"
-					size="icon"
-					className={active === "home" ? "text-primary" : "text-gray-400"}>
-					<Home className="w-6 h-6" />
-					<span className="sr-only">{t("home")}</span>
-				</Button>
-			</Link>
-			<Link href="/category/all">
-				<Button
-					variant="ghost"
-					size="icon"
-					className={
-						active === "categories" ? "text-primary" : "text-gray-400"
-					}>
-					<Trophy className="w-6 h-6" />
-					<span className="sr-only">{t("categories")}</span>
-				</Button>
-			</Link>
-			<Link href="/profile">
-				<Button
-					variant="ghost"
-					size="icon"
-					className={active === "profile" ? "text-primary" : "text-gray-400"}>
-					<User className="w-6 h-6" />
-					<span className="sr-only">{t("profile")}</span>
-				</Button>
-			</Link>
-			<Link href="/more">
-				<Button
-					variant="ghost"
-					size="icon"
-					className={active === "more" ? "text-primary" : "text-gray-400"}>
-					<Menu className="w-6 h-6" />
-					<span className="sr-only">{t("more")}</span>
-				</Button>
-			</Link>
+		<nav className="bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 z-50">
+			<div className="max-w-screen-xl mx-auto px-4">
+				<ul className="flex justify-around py-1">
+					{navItems.map((item) => (
+						<li key={item.name} className="relative">
+							<button
+								onClick={() => handleNavClick(item)}
+								className={cn(
+									"flex flex-col items-center justify-center w-14 h-12 rounded-lg",
+									"transition-colors duration-200",
+									active === item.name ? "text-primary" : "text-gray-400"
+								)}>
+								<item.icon className="w-5 h-5" />
+								<span className="text-xs mt-0.5">{t(item.name)}</span>
+								{active === item.name && (
+									<motion.div
+										className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary"
+										layoutId="activeTab"
+										initial={false}
+										transition={{
+											type: "spring",
+											stiffness: 500,
+											damping: 30,
+										}}
+									/>
+								)}
+							</button>
+						</li>
+					))}
+				</ul>
+			</div>
 		</nav>
 	);
 }

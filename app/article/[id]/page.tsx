@@ -37,14 +37,14 @@ export default function ArticlePage({ params }: { params: { id: string } }) {
 				</h1>
 				<div className="flex items-center text-sm text-gray-500 mb-4">
 					<img
-						src="/placeholder.svg?height=32&width=32"
+						src="/assets/images/file.png?height=32&width=32"
 						alt="Author"
 						className="w-8 h-8 rounded-full mr-2"
 					/>
-					<span>John Doe • 2 hours ago</span>
+					<span>Abebe Teka • 2 hours ago</span>
 				</div>
 				<img
-					src="/placeholder.svg?height=200&width=375"
+					src="/assets/images/fb1.png?height=200&width=375"
 					alt="Article hero image"
 					className="w-full h-48 object-cover rounded-lg mb-4"
 				/>

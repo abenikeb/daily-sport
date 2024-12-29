@@ -290,116 +290,14 @@ export default function AdminDashboard({
 			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				<Tabs defaultValue="categories" className="space-y-4">
 					<TabsList>
+						<TabsTrigger value="pending">{t("pendingReview")}</TabsTrigger>
+						<TabsTrigger value="approved">{t("approved")}</TabsTrigger>
+						<TabsTrigger value="rejected">{t("rejected")}</TabsTrigger>
 						<TabsTrigger value="categories">{t("categories")}</TabsTrigger>
 						<TabsTrigger value="subcategories">
 							{t("subcategories")}
 						</TabsTrigger>
-						<TabsTrigger value="pending">{t("pendingReview")}</TabsTrigger>
-						<TabsTrigger value="approved">{t("approved")}</TabsTrigger>
-						<TabsTrigger value="rejected">{t("rejected")}</TabsTrigger>
 					</TabsList>
-					<TabsContent value="categories" className="space-y-4">
-						<div className="bg-white shadow-sm rounded-lg p-6">
-							<h2 className="text-xl font-semibold mb-4">{t("addCategory")}</h2>
-							<div className="flex space-x-2">
-								<Input
-									value={newCategory}
-									onChange={(e) => setNewCategory(e.target.value)}
-									placeholder={t("enterCategoryName")}
-								/>
-								<Button onClick={handleAddCategory}>
-									<Plus className="mr-2 h-4 w-4" /> {t("add")}
-								</Button>
-							</div>
-						</div>
-						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>{t("categoryName")}</TableHead>
-										<TableHead>{t("actions")}</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{categories.map((category) => (
-										<TableRow key={category.id}>
-											<TableCell>{category.name}</TableCell>
-											<TableCell>
-												<Button
-													variant="ghost"
-													size="sm"
-													onClick={() => handleDeleteCategory(category.id)}>
-													<Trash className="h-4 w-4" />
-												</Button>
-											</TableCell>
-										</TableRow>
-									))}
-								</TableBody>
-							</Table>
-						</div>
-					</TabsContent>
-					<TabsContent value="subcategories" className="space-y-4">
-						<div className="bg-white shadow-sm rounded-lg p-6">
-							<h2 className="text-xl font-semibold mb-4">
-								{t("addSubcategory")}
-							</h2>
-							<div className="flex space-x-2">
-								<select
-									className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-									value={selectedCategory || ""}
-									onChange={(e) => setSelectedCategory(e.target.value)}>
-									<option value="">{t("selectCategory")}</option>
-									{categories.map((category) => (
-										<option key={category.id} value={category.id}>
-											{category.name}
-										</option>
-									))}
-								</select>
-								<Input
-									value={newSubcategory}
-									onChange={(e) => setNewSubcategory(e.target.value)}
-									placeholder={t("enterSubcategoryName")}
-								/>
-								<Button onClick={handleAddSubcategory}>
-									<Plus className="mr-2 h-4 w-4" /> {t("add")}
-								</Button>
-							</div>
-						</div>
-						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>{t("categoryName")}</TableHead>
-										<TableHead>{t("subcategoryName")}</TableHead>
-										<TableHead>{t("actions")}</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{categories.flatMap((category) =>
-										category.subcategories.map((subcategory) => (
-											<TableRow key={subcategory.id}>
-												<TableCell>{category.name}</TableCell>
-												<TableCell>{subcategory.name}</TableCell>
-												<TableCell>
-													<Button
-														variant="ghost"
-														size="sm"
-														onClick={() =>
-															handleDeleteSubcategory(
-																subcategory.id,
-																category.id
-															)
-														}>
-														<Trash className="h-4 w-4" />
-													</Button>
-												</TableCell>
-											</TableRow>
-										))
-									)}
-								</TableBody>
-							</Table>
-						</div>
-					</TabsContent>
 					<TabsContent value="pending" className="space-y-4">
 						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
 							<Table>
@@ -518,6 +416,108 @@ export default function AdminDashboard({
 												</TableCell>
 											</TableRow>
 										))}
+								</TableBody>
+							</Table>
+						</div>
+					</TabsContent>
+					<TabsContent value="categories" className="space-y-4">
+						<div className="bg-white shadow-sm rounded-lg p-6">
+							<h2 className="text-xl font-semibold mb-4">{t("addCategory")}</h2>
+							<div className="flex space-x-2">
+								<Input
+									value={newCategory}
+									onChange={(e) => setNewCategory(e.target.value)}
+									placeholder={t("enterCategoryName")}
+								/>
+								<Button onClick={handleAddCategory}>
+									<Plus className="mr-2 h-4 w-4" /> {t("add")}
+								</Button>
+							</div>
+						</div>
+						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>{t("categoryName")}</TableHead>
+										<TableHead>{t("actions")}</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{categories.map((category) => (
+										<TableRow key={category.id}>
+											<TableCell>{category.name}</TableCell>
+											<TableCell>
+												<Button
+													variant="ghost"
+													size="sm"
+													onClick={() => handleDeleteCategory(category.id)}>
+													<Trash className="h-4 w-4" />
+												</Button>
+											</TableCell>
+										</TableRow>
+									))}
+								</TableBody>
+							</Table>
+						</div>
+					</TabsContent>
+					<TabsContent value="subcategories" className="space-y-4">
+						<div className="bg-white shadow-sm rounded-lg p-6">
+							<h2 className="text-xl font-semibold mb-4">
+								{t("addSubcategory")}
+							</h2>
+							<div className="flex space-x-2">
+								<select
+									className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+									value={selectedCategory || ""}
+									onChange={(e) => setSelectedCategory(e.target.value)}>
+									<option value="">{t("selectCategory")}</option>
+									{categories.map((category) => (
+										<option key={category.id} value={category.id}>
+											{category.name}
+										</option>
+									))}
+								</select>
+								<Input
+									value={newSubcategory}
+									onChange={(e) => setNewSubcategory(e.target.value)}
+									placeholder={t("enterSubcategoryName")}
+								/>
+								<Button onClick={handleAddSubcategory}>
+									<Plus className="mr-2 h-4 w-4" /> {t("add")}
+								</Button>
+							</div>
+						</div>
+						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>{t("categoryName")}</TableHead>
+										<TableHead>{t("subcategoryName")}</TableHead>
+										<TableHead>{t("actions")}</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{categories.flatMap((category) =>
+										category.subcategories.map((subcategory) => (
+											<TableRow key={subcategory.id}>
+												<TableCell>{category.name}</TableCell>
+												<TableCell>{subcategory.name}</TableCell>
+												<TableCell>
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={() =>
+															handleDeleteSubcategory(
+																subcategory.id,
+																category.id
+															)
+														}>
+														<Trash className="h-4 w-4" />
+													</Button>
+												</TableCell>
+											</TableRow>
+										))
+									)}
 								</TableBody>
 							</Table>
 						</div>
