@@ -6,33 +6,33 @@ import { nanoid } from "nanoid";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-export async function signupWriter(formData: FormData) {
-	const email = formData.get("email") as string;
+export async function signupUser(formData: FormData) {
+	const name = formData.get("name") as string;
+	const phone = formData.get("phone") as string;
 	const password = formData.get("password") as string;
 
-	if (!email || !password) {
-		return { error: "Email and password are required" };
+	if (!name || !phone || !password) {
+		return { error: "Name, phone, and password are required" };
 	}
 
 	try {
-		const existingUser = await prisma.user.findUnique({ where: { email } });
+		const existingUser = await prisma.user.findUnique({ where: { phone } });
 		if (existingUser) {
-			return { error: "User already exists" };
+			return { error: "User with this phone number already exists" };
 		}
 
 		const hashedPassword = await bcrypt.hash(password, 10);
 		const user = await prisma.user.create({
 			data: {
-				name: "Admin",
-				email,
+				name,
+				phone,
 				password: hashedPassword,
-				role: "WRITER",
 			} as any,
 		});
 
 		const token = await new SignJWT({
 			userId: user.id,
-			email: user.email,
+			phone: user.phone,
 			role: user.role,
 		})
 			.setProtectedHeader({ alg: "HS256" })
@@ -46,24 +46,24 @@ export async function signupWriter(formData: FormData) {
 			secure: process.env.NODE_ENV === "production",
 		});
 
-		return { success: "Writer account created successfully" };
+		return { success: "User account created successfully" };
 	} catch (error) {
 		console.error("Signup error:", error);
 		return { error: "An error occurred during signup" };
 	}
 }
 
-export async function loginWriter(formData: FormData) {
-	const email = formData.get("email") as string;
+export async function loginUser(formData: FormData) {
+	const phone = formData.get("phone") as string;
 	const password = formData.get("password") as string;
 
-	if (!email || !password) {
-		return { error: "Email and password are required" };
+	if (!phone || !password) {
+		return { error: "Phone and password are required" };
 	}
 
 	try {
-		const user = await prisma.user.findUnique({ where: { email } });
-		if (!user || user.role !== "WRITER") {
+		const user = await prisma.user.findUnique({ where: { phone } });
+		if (!user) {
 			return { error: "Invalid credentials" };
 		}
 
@@ -74,7 +74,7 @@ export async function loginWriter(formData: FormData) {
 
 		const token = await new SignJWT({
 			userId: user.id,
-			email: user.email,
+			phone: user.phone,
 			role: user.role,
 		})
 			.setProtectedHeader({ alg: "HS256" })
@@ -85,12 +85,8 @@ export async function loginWriter(formData: FormData) {
 
 		cookies().set("token", token, {
 			httpOnly: true,
-			secure: false,
+			secure: process.env.NODE_ENV === "production",
 		});
-		// cookies().set("token", token, {
-		// 	httpOnly: true,
-		// 	secure: process.env.NODE_ENV === "production",
-		// });
 
 		return { success: "Logged in successfully" };
 	} catch (error) {

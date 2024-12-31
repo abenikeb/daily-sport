@@ -46,6 +46,7 @@ export default function WriterAuthPage() {
 
 		const action = isLogin ? loginWriter : signupWriter;
 		const result = await action(formData);
+		console.log({ result });
 
 		if (result.success) {
 			toast({

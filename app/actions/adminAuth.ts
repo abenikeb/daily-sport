@@ -27,7 +27,7 @@ export async function signupAdmin(formData: FormData) {
 				email,
 				password: hashedPassword,
 				role: "ADMIN",
-			},
+			} as any,
 		});
 
 		const token = await new SignJWT({

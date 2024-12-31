@@ -23,13 +23,15 @@
 			"@*": ["./*"]
 		}
 	},
+
 	"include": [
 		"next-env.d.ts",
 		"**/*.ts",
 		"**/*.tsx",
 		".next/types/**/*.ts",
 		"prisma/**/*.ts",
-		"prisma/migrations/update_article_json_fields.js"
+		"prisma/migrations/update_article_json_fields.js",
+		"app/(portal)/layout.jsx"
 	],
 	"exclude": ["node_modules"]
 }

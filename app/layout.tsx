@@ -64,9 +64,8 @@ export default function RootLayout({
 							</header>
 							<Toaster />
 							{children}
-
-							<BottomNavigation />
 						</div>
+						<BottomNavigation />
 					</body>
 				</LanguageProvider>
 			</Provider>

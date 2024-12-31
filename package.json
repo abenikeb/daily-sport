@@ -7,9 +7,10 @@
 		"build": "next build",
 		"start": "next start",
 		"lint": "next lint",
-		"seed": "node -r ts-node/register ./prisma/seed.ts"
+		"seed": "node -r ts-node/register @/prisma/seed.ts"
 	},
 	"dependencies": {
+		"@chakra-ui/react": "^3.2.4",
 		"@hookform/resolvers": "^3.9.0",
 		"@prisma/client": "^6.1.0",
 		"@radix-ui/react-avatar": "^1.1.0",
@@ -35,6 +36,7 @@
 		"clsx": "^2.1.1",
 		"date-fns": "^4.1.0",
 		"embla-carousel-react": "^8.3.0",
+		"formidable": "^3.5.2",
 		"framer-motion": "^11.15.0",
 		"lucide-react": "^0.428.0",
 		"next": "14.2.5",
@@ -44,6 +46,8 @@
 		"react-dom": "^18",
 		"react-dropzone": "^14.2.9",
 		"react-hook-form": "^7.53.0",
+		"react-hot-toast": "^2.4.1",
+		"react-i18next": "^15.4.0",
 		"react-phone-input-2": "^2.15.1",
 		"recharts": "^2.15.0",
 		"shadcn-ui": "^0.8.0",
@@ -54,6 +58,7 @@
 	"type": "module",
 	"devDependencies": {
 		"@types/bcryptjs": "^2.4.6",
+		"@types/formidable": "^3.4.5",
 		"@types/node": "^20.17.10",
 		"@types/react": "^18",
 		"@types/react-dom": "^18",
@@ -65,6 +70,6 @@
 		"typescript": "^5.7.2"
 	},
 	"prisma": {
-		"seed": "ts-node ./prisma/seed.ts"
+		"seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} @/prisma/seed.ts"
 	}
 }
