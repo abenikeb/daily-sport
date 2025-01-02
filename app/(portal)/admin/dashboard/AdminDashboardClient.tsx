@@ -57,7 +57,7 @@ interface User {
 }
 
 interface AdminDashboardProps {
-	user: User;
+	user: User | any;
 	initialCategories: Category[];
 }
 

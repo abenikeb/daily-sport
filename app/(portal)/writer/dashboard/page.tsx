@@ -19,6 +19,7 @@ async function getUser(token: string) {
 
 export default async function WriterDashboard() {
 	const token = cookies().get("token")?.value;
+	console.log({ token });
 
 	if (!token) {
 		redirect("/writer/auth");

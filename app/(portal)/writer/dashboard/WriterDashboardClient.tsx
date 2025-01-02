@@ -67,7 +67,7 @@ interface User {
 }
 
 interface WriterDashboardClientProps {
-	user: User;
+	user: User | any;
 	initialCategories: Category[];
 	initialArticles: Article[] | any;
 }
@@ -80,16 +80,25 @@ export default function WriterDashboardClient({
 	const { t, language } = useLanguage();
 	const router = useRouter();
 	const { toast } = useToast();
-	const [articles, setArticles] = useState<Article[]>(initialArticles);
+	const [articles, setArticles] = useState<Article[] | any>(initialArticles);
 	const [categories, setCategories] = useState<Category[]>(initialCategories);
 	const [subcategories, setSubcategories] = useState<Category[]>([]);
 	const [selectedLanguage, setSelectedLanguage] = useState("en");
+	// const [formData, setFormData] = useState({
+	// 	title: { en: "", am: "", om: "" },
+	// 	content: { en: "", am: "", om: "" },
+	// 	categoryId: "",
+	// 	subcategoryId: "",
+	// 	tags: "",
+	// });
+
 	const [formData, setFormData] = useState({
 		title: { en: "", am: "", om: "" },
 		content: { en: "", am: "", om: "" },
 		categoryId: "",
 		subcategoryId: "",
 		tags: "",
+		featuredImage: null,
 	});
 
 	const handleInputChange = (
@@ -125,18 +134,27 @@ export default function WriterDashboardClient({
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		const formDataToSend = new FormData();
+		formDataToSend.append("title", JSON.stringify(formData.title));
+		formDataToSend.append("content", JSON.stringify(formData.content));
+		formDataToSend.append("authorId", user.id);
+		formDataToSend.append("categoryId", formData.categoryId);
+		formDataToSend.append("subcategoryId", formData.subcategoryId);
+		formDataToSend.append(
+			"tags",
+			JSON.stringify(formData.tags.split(",").map((tag) => tag.trim()))
+		);
+		if (formData.featuredImage) {
+			formDataToSend.append("featuredImage", formData.featuredImage);
+		}
+
 		try {
 			const res = await fetch("/api/writer/articles", {
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					...formData,
-					authorId: user.id,
-					tags: formData.tags.split(",").map((tag) => tag.trim()),
-				}),
+				body: formDataToSend,
 			});
 			if (!res.ok) {
-				throw new Error("Failed to submit article");
+				throw new Error(`Error! status: ${res.status}`);
 			}
 			const newArticle = await res.json();
 			setArticles([newArticle, ...articles]);
@@ -146,20 +164,73 @@ export default function WriterDashboardClient({
 				categoryId: "",
 				subcategoryId: "",
 				tags: "",
+				featuredImage: null,
 			});
+
 			toast({
 				title: t("articleSubmitted"),
 				description: t("articleSubmittedDescription"),
 				duration: 5000,
 			});
+			router.push("/writer/articles");
 		} catch (error) {
-			console.error("Error submitting article:", error);
+			console.error(error);
 			toast({
 				title: t("errorSubmittingArticle"),
 				description: t("errorSubmittingArticleDescription"),
 				variant: "destructive",
 				duration: 5000,
 			});
+		}
+	};
+
+	// const handleSubmit = async (e: React.FormEvent) => {
+	// 	e.preventDefault();
+	// 	try {
+	// 		const res = await fetch("/api/writer/articles", {
+	// 			method: "POST",
+	// 			headers: { "Content-Type": "application/json" },
+	// 			body: JSON.stringify({
+	// 				...formData,
+	// 				authorId: user.id,
+	// 				tags: formData.tags.split(",").map((tag) => tag.trim()),
+	// 			}),
+	// 		});
+	// 		if (!res.ok) {
+	// 			throw new Error("Failed to submit article");
+	// 		}
+	// 		const newArticle = await res.json();
+	// 		setArticles([newArticle, ...articles]);
+	// 		setFormData({
+	// 			title: { en: "", am: "", om: "" },
+	// 			content: { en: "", am: "", om: "" },
+	// 			categoryId: "",
+	// 			subcategoryId: "",
+	// 			tags: "",
+	// 		});
+
+	// 		toast({
+	// 			title: t("articleSubmitted"),
+	// 			description: t("articleSubmittedDescription"),
+	// 			duration: 5000,
+	// 		});
+	// 	} catch (error) {
+	// 		console.error("Error submitting article:", error);
+	// 		toast({
+	// 			title: t("errorSubmittingArticle"),
+	// 			description: t("errorSubmittingArticleDescription"),
+	// 			variant: "destructive",
+	// 			duration: 5000,
+	// 		});
+	// 	}
+	// };
+
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | any) => {
+		if (e.target.files && e.target.files[0]) {
+			setFormData((prev: any) => ({
+				...prev,
+				featuredImage: e.target.files[0],
+			}));
 		}
 	};
 
@@ -328,9 +399,21 @@ export default function WriterDashboardClient({
 								<Input
 									id="tags"
 									name="tags"
-									value={formData.tags}
-									onChange={handleInputChange}
-									placeholder={t("enterTags")}
+									type="text"
+									onChange={(e) =>
+										setFormData((prev) => ({ ...prev, tags: e.target.value }))
+									}
+									placeholder="Enter tags separated by commas"
+								/>
+							</div>
+							<div className="mb-6">
+								<Label htmlFor="featuredImage">{t("featuredImage")}</Label>
+								<Input
+									id="featuredImage"
+									name="featuredImage"
+									type="file"
+									onChange={handleFileChange}
+									accept="image/*"
 								/>
 							</div>
 
@@ -348,7 +431,7 @@ export default function WriterDashboardClient({
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{articles.map((article) => (
+									{articles.map((article: any) => (
 										<TableRow key={article.id}>
 											<TableCell className="font-medium">
 												{typeof article.title === "string"
