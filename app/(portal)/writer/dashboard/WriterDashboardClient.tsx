@@ -134,27 +134,18 @@ export default function WriterDashboardClient({
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		const formDataToSend = new FormData();
-		formDataToSend.append("title", JSON.stringify(formData.title));
-		formDataToSend.append("content", JSON.stringify(formData.content));
-		formDataToSend.append("authorId", user.id);
-		formDataToSend.append("categoryId", formData.categoryId);
-		formDataToSend.append("subcategoryId", formData.subcategoryId);
-		formDataToSend.append(
-			"tags",
-			JSON.stringify(formData.tags.split(",").map((tag) => tag.trim()))
-		);
-		if (formData.featuredImage) {
-			formDataToSend.append("featuredImage", formData.featuredImage);
-		}
-
 		try {
 			const res = await fetch("/api/writer/articles", {
 				method: "POST",
-				body: formDataToSend,
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					...formData,
+					authorId: user.id,
+					tags: formData.tags.split(",").map((tag) => tag.trim()),
+				}),
 			});
 			if (!res.ok) {
-				throw new Error(`Error! status: ${res.status}`);
+				throw new Error("Failed to submit article");
 			}
 			const newArticle = await res.json();
 			setArticles([newArticle, ...articles]);
@@ -172,9 +163,8 @@ export default function WriterDashboardClient({
 				description: t("articleSubmittedDescription"),
 				duration: 5000,
 			});
-			router.push("/writer/articles");
 		} catch (error) {
-			console.error(error);
+			console.error("Error submitting article:", error);
 			toast({
 				title: t("errorSubmittingArticle"),
 				description: t("errorSubmittingArticleDescription"),
@@ -183,47 +173,6 @@ export default function WriterDashboardClient({
 			});
 		}
 	};
-
-	// const handleSubmit = async (e: React.FormEvent) => {
-	// 	e.preventDefault();
-	// 	try {
-	// 		const res = await fetch("/api/writer/articles", {
-	// 			method: "POST",
-	// 			headers: { "Content-Type": "application/json" },
-	// 			body: JSON.stringify({
-	// 				...formData,
-	// 				authorId: user.id,
-	// 				tags: formData.tags.split(",").map((tag) => tag.trim()),
-	// 			}),
-	// 		});
-	// 		if (!res.ok) {
-	// 			throw new Error("Failed to submit article");
-	// 		}
-	// 		const newArticle = await res.json();
-	// 		setArticles([newArticle, ...articles]);
-	// 		setFormData({
-	// 			title: { en: "", am: "", om: "" },
-	// 			content: { en: "", am: "", om: "" },
-	// 			categoryId: "",
-	// 			subcategoryId: "",
-	// 			tags: "",
-	// 		});
-
-	// 		toast({
-	// 			title: t("articleSubmitted"),
-	// 			description: t("articleSubmittedDescription"),
-	// 			duration: 5000,
-	// 		});
-	// 	} catch (error) {
-	// 		console.error("Error submitting article:", error);
-	// 		toast({
-	// 			title: t("errorSubmittingArticle"),
-	// 			description: t("errorSubmittingArticleDescription"),
-	// 			variant: "destructive",
-	// 			duration: 5000,
-	// 		});
-	// 	}
-	// };
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | any) => {
 		if (e.target.files && e.target.files[0]) {
