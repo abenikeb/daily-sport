@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Trophy, User, Menu } from "lucide-react";
 import { motion } from "framer-motion";
@@ -28,13 +27,17 @@ export function BottomNavigation() {
 	const [active, setActive] = useState<string>("home");
 
 	useEffect(() => {
-		const currentItem =
-			navItems.find((item) => pathname?.startsWith(item.href)) || navItems[0];
-		setActive(currentItem.name);
+		const currentItem = navItems.find(
+			(item) =>
+				pathname === item.href ||
+				(item.href !== "/" && pathname?.startsWith(item.href))
+		);
+		if (currentItem) {
+			setActive(currentItem.name);
+		}
 	}, [pathname]);
 
 	const handleNavClick = (item: NavItem) => {
-		setActive(item.name);
 		router.push(item.href);
 	};
 

@@ -184,9 +184,9 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-			<main className="w-[100%] mx-auto px-4 sm:px-6 lg:px-8 py-5">
+			<main className="w-[100%] mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-16">
 				<Card className="w-full overflow-hidden shadow-xl">
-					<CardHeader className="bg-gradient-to-r from-red-600 to-blue-900 text-white p-8">
+					<CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8">
 						<div className="flex flex-col md:flex-row items-center justify-between">
 							<div className="flex items-center space-x-6 mb-4 md:mb-0">
 								<Avatar className="h-28 w-28 border-4 border-white shadow-lg">

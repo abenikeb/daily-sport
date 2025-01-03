@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LoginModal } from "@/components/LoginModal";
@@ -57,16 +57,7 @@ export default function ArticleDetailClient({
 	const [isFavorite, setIsFavorite] = useState(false);
 	const [isBookmarked, setIsBookmarked] = useState(false);
 
-	useEffect(() => {
-		if (!localIsAuthenticated) {
-			setShowLoginModal(true);
-		} else {
-			checkIfFavorite();
-			checkIfBookmarked();
-		}
-	}, [localIsAuthenticated, articleId, userId]);
-
-	const checkIfFavorite = async () => {
+	const checkIfFavorite = useCallback(async () => {
 		if (userId) {
 			try {
 				const response = await fetch(
@@ -78,9 +69,9 @@ export default function ArticleDetailClient({
 				console.error("Error checking favorite status:", error);
 			}
 		}
-	};
+	}, [userId, articleId]);
 
-	const checkIfBookmarked = async () => {
+	const checkIfBookmarked = useCallback(async () => {
 		if (userId) {
 			try {
 				const response = await fetch(
@@ -92,25 +83,14 @@ export default function ArticleDetailClient({
 				console.error("Error checking bookmark status:", error);
 			}
 		}
-	};
+	}, [userId, articleId]);
 
-	const getLocalizedContent = (content: LocalizedContent) => {
-		try {
-			const parsedContent = JSON.parse(content as any);
-			return (
-				parsedContent[language as keyof typeof parsedContent] ||
-				parsedContent.en ||
-				""
-			);
-		} catch (error) {
-			console.error("Invalid content format:", error);
-			return "";
+	useEffect(() => {
+		if (localIsAuthenticated) {
+			checkIfFavorite();
+			checkIfBookmarked();
 		}
-	};
-
-	// const getLocalizedContent = (content: LocalizedContent) => {
-	// 	return content[language as keyof LocalizedContent] || content.en || "";
-	// };
+	}, [localIsAuthenticated, checkIfFavorite, checkIfBookmarked]);
 
 	useEffect(() => {
 		const incrementViewCount = async () => {
@@ -130,14 +110,31 @@ export default function ArticleDetailClient({
 		incrementViewCount();
 	}, [articleId]);
 
+	const getLocalizedContent = (content: LocalizedContent) => {
+		try {
+			const parsedContent = JSON.parse(content as any);
+			return (
+				parsedContent[language as keyof typeof parsedContent] ||
+				parsedContent.en ||
+				""
+			);
+		} catch (error) {
+			console.error("Invalid content format:", error);
+			return "";
+		}
+	};
+
 	const handleLoginSuccess = () => {
 		setLocalIsAuthenticated(true);
 		setShowLoginModal(false);
+		checkIfFavorite();
+		checkIfBookmarked();
 	};
 
 	const handleLoginModalClose = () => {
 		setShowLoginModal(false);
-		router.push("/");
+		// Remove the redirection to home page
+		// router.push("/");
 	};
 
 	const handleFavoriteToggle = async () => {
@@ -193,7 +190,6 @@ export default function ArticleDetailClient({
 	return (
 		<div className="w-full mx-auto bg-gray-50 min-h-screen flex flex-col pb-12">
 			{/* Header */}
-
 			<header className="sticky top-0 bg-white p-4 flex justify-between items-center border-b border-gray-200 shadow-sm z-10">
 				<Link href="/">
 					<Button variant="ghost" size="icon">
@@ -213,15 +209,11 @@ export default function ArticleDetailClient({
 					<div className="relative h-64 md:h-96">
 						<Image
 							src={article.featuredImage || "/assets/images/fb1.png"}
-							// src={article.featuredImage}
 							alt={getLocalizedContent(article.title)}
 							layout="fill"
 							objectFit="cover"
 						/>
 					</div>
-					{/* {article.featuredImage && (
-						
-					)} */}
 					<div className="p-6">
 						<div className="flex justify-between items-start mb-4">
 							<h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -259,7 +251,6 @@ export default function ArticleDetailClient({
 
 						<div className="flex items-center text-sm text-gray-500 mb-4">
 							<Image
-								// src={article.author?.avatar}
 								src="/assets/images/file.png?height=32&width=32"
 								alt={article.author?.name}
 								width={32}
@@ -271,10 +262,6 @@ export default function ArticleDetailClient({
 								{new Date(article.createdAt).toLocaleDateString()}
 							</span>
 						</div>
-
-						{/* <p className="text-gray-600 mb-2">
-							{t("category")}: {t(article.category)}
-						</p> */}
 
 						<div className="prose max-w-none mt-6">
 							{getLocalizedContent(article.content)}
