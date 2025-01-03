@@ -38,6 +38,10 @@ import {
 import { Article, ArticleStatus } from "@prisma/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+import { ViewArticleModal } from "@/components/ViewArticleModal";
+import { Eye } from "lucide-react";
+import Image from "next/image";
+
 interface Category {
 	id: string;
 	name: string;
@@ -74,6 +78,9 @@ export default function AdminDashboard({
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 	const [articles, setArticles] = useState<Article[]>([]);
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+	const [viewingArticle, setViewingArticle] = useState<Article | null>(null);
+	const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
 	useEffect(() => {
 		async function fetchArticles() {
@@ -223,31 +230,32 @@ export default function AdminDashboard({
 	};
 
 	const handleReview = async (id: string, newStatus: ArticleStatus) => {
-		const res = await fetch("/api/admin/articles", {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ id, status: newStatus }),
-		});
-		if (res.ok) {
+		try {
+			const res = await fetch("/api/admin/articles", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ id, status: newStatus }),
+			});
+			if (!res.ok) throw new Error("Failed to update article status");
+			const updatedArticle = await res.json();
 			setArticles(
 				articles.map((article) =>
-					article.id === id ? { ...article, status: newStatus } : article
+					article.id === id ? updatedArticle : article
 				)
 			);
-			if (newStatus === "APPROVED") {
-				toast({
-					title: t("articleApproved"),
-					description: t("articleApprovedDescription"),
-					duration: 5000,
-				});
-			} else if (newStatus === "REJECTED") {
-				toast({
-					title: t("articleRejected"),
-					description: t("articleRejectedDescription"),
-					duration: 5000,
-				});
-			}
-		} else {
+			toast({
+				title:
+					newStatus === "APPROVED"
+						? t("articleApproved")
+						: t("articleRejected"),
+				description:
+					newStatus === "APPROVED"
+						? t("articleApprovedDescription")
+						: t("articleRejectedDescription"),
+				duration: 5000,
+			});
+		} catch (error) {
+			console.error("Error reviewing article:", error);
 			toast({
 				title: t("errorReviewingArticle"),
 				description: t("errorReviewingArticleDescription"),
@@ -255,6 +263,46 @@ export default function AdminDashboard({
 				duration: 5000,
 			});
 		}
+	};
+
+	// const handleReview = async (id: string, newStatus: ArticleStatus) => {
+	// 	const res = await fetch("/api/admin/articles", {
+	// 		method: "PUT",
+	// 		headers: { "Content-Type": "application/json" },
+	// 		body: JSON.stringify({ id, status: newStatus }),
+	// 	});
+	// 	if (res.ok) {
+	// 		setArticles(
+	// 			articles.map((article) =>
+	// 				article.id === id ? { ...article, status: newStatus } : article
+	// 			)
+	// 		);
+	// 		if (newStatus === "APPROVED") {
+	// 			toast({
+	// 				title: t("articleApproved"),
+	// 				description: t("articleApprovedDescription"),
+	// 				duration: 5000,
+	// 			});
+	// 		} else if (newStatus === "REJECTED") {
+	// 			toast({
+	// 				title: t("articleRejected"),
+	// 				description: t("articleRejectedDescription"),
+	// 				duration: 5000,
+	// 			});
+	// 		}
+	// 	} else {
+	// 		toast({
+	// 			title: t("errorReviewingArticle"),
+	// 			description: t("errorReviewingArticleDescription"),
+	// 			variant: "destructive",
+	// 			duration: 5000,
+	// 		});
+	// 	}
+	// };
+
+	const handleView = (article: Article) => {
+		setViewingArticle(article);
+		setIsViewModalOpen(true);
 	};
 
 	return (
@@ -332,15 +380,177 @@ export default function AdminDashboard({
 			</header>
 
 			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				<Tabs defaultValue="categorySettings" className="space-y-4">
+				<Tabs defaultValue="pending" className="space-y-4">
 					<TabsList className="flex flex-wrap justify-start gap-2">
-						<TabsTrigger value="categorySettings">
-							{t("categorySettings")}
-						</TabsTrigger>
 						<TabsTrigger value="pending">{t("pendingReview")}</TabsTrigger>
 						<TabsTrigger value="approved">{t("approved")}</TabsTrigger>
 						<TabsTrigger value="rejected">{t("rejected")}</TabsTrigger>
+						<TabsTrigger value="categorySettings">
+							{t("categorySettings")}
+						</TabsTrigger>
 					</TabsList>
+
+					<TabsContent value="pending" className="space-y-4">
+						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>{t("tableNo")}</TableHead>
+										<TableHead>{t("image")}</TableHead>
+										<TableHead>{t("title")}</TableHead>
+										<TableHead>{t("content")}</TableHead>
+										<TableHead>{t("author")}</TableHead>
+										<TableHead className="hidden md:table-cell">
+											{t("submissionDate")}
+										</TableHead>
+										<TableHead>{t("actions")}</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{articles.filter((article) => article.status === "PENDING")
+										.length === 0 ? (
+										<TableRow>
+											<TableCell colSpan={7} className="text-center py-4">
+												{t("noPendingReviews")}
+											</TableCell>
+										</TableRow>
+									) : (
+										articles
+											.filter((article) => article.status === "PENDING")
+											.map((article: any, index: number) => (
+												<TableRow key={article.id}>
+													<TableCell>{index + 1}</TableCell>
+													<TableCell>
+														{article.featuredImage && (
+															<Image
+																src={article.featuredImage}
+																alt={t("featuredImage")}
+																width={50}
+																height={50}
+																className="object-cover rounded"
+															/>
+														)}
+													</TableCell>
+													<TableCell className="font-medium">
+														{typeof article.title === "string"
+															? JSON.parse(article.title)[language] ||
+															  JSON.parse(article.title).en
+															: article.title[
+																	language as keyof typeof article.title
+															  ] || article.title.en}
+													</TableCell>
+													<TableCell>
+														<Button
+															variant="ghost"
+															size="sm"
+															onClick={() => handleView(article)}>
+															<Eye className="mr-2 h-4 w-4" />
+															{t("view")}
+														</Button>
+													</TableCell>
+													<TableCell>{(article.author as any).name}</TableCell>
+													<TableCell className="hidden md:table-cell">
+														{new Date(article.createdAt).toLocaleDateString()}
+													</TableCell>
+													<TableCell>
+														<div className="flex flex-col sm:flex-row gap-2">
+															<Button
+																size="sm"
+																onClick={() =>
+																	handleReview(article.id, "APPROVED")
+																}>
+																<Check className="mr-2 h-4 w-4" />
+																{t("approve")}
+															</Button>
+															<Button
+																size="sm"
+																variant="destructive"
+																onClick={() =>
+																	handleReview(article.id, "REJECTED")
+																}>
+																<X className="mr-2 h-4 w-4" />
+																{t("reject")}
+															</Button>
+														</div>
+													</TableCell>
+												</TableRow>
+											))
+									)}
+								</TableBody>
+							</Table>
+						</div>
+					</TabsContent>
+
+					<TabsContent value="approved" className="space-y-4">
+						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>{t("title")}</TableHead>
+										<TableHead>{t("author")}</TableHead>
+										<TableHead className="hidden md:table-cell">
+											{t("submissionDate")}
+										</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{articles
+										.filter((article) => article.status === "APPROVED")
+										.map((article: any) => (
+											<TableRow key={article.id}>
+												<TableCell className="font-medium">
+													{typeof article.title === "string"
+														? JSON.parse(article.title)[language] ||
+														  JSON.parse(article.title).en
+														: article.title[
+																language as keyof typeof article.title
+														  ] || article.title.en}
+												</TableCell>
+												<TableCell>{(article.author as any).name}</TableCell>
+												<TableCell className="hidden md:table-cell">
+													{new Date(article.createdAt).toLocaleDateString()}
+												</TableCell>
+											</TableRow>
+										))}
+								</TableBody>
+							</Table>
+						</div>
+					</TabsContent>
+					<TabsContent value="rejected" className="space-y-4">
+						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>{t("title")}</TableHead>
+										<TableHead>{t("author")}</TableHead>
+										<TableHead className="hidden md:table-cell">
+											{t("submissionDate")}
+										</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{articles
+										.filter((article) => article.status === "REJECTED")
+										.map((article: any) => (
+											<TableRow key={article.id}>
+												<TableCell className="font-medium">
+													{typeof article.title === "string"
+														? JSON.parse(article.title)[language] ||
+														  JSON.parse(article.title).en
+														: article.title[
+																language as keyof typeof article.title
+														  ] || article.title.en}
+												</TableCell>
+												<TableCell>{(article.author as any).name}</TableCell>
+												<TableCell className="hidden md:table-cell">
+													{new Date(article.createdAt).toLocaleDateString()}
+												</TableCell>
+											</TableRow>
+										))}
+								</TableBody>
+							</Table>
+						</div>
+					</TabsContent>
 					<TabsContent value="categorySettings" className="space-y-4">
 						<div className="bg-white shadow-sm rounded-lg p-6">
 							<h2 className="text-xl font-semibold mb-4">{t("addCategory")}</h2>
@@ -419,143 +629,12 @@ export default function AdminDashboard({
 							</Table>
 						</div>
 					</TabsContent>
-					<TabsContent value="pending" className="space-y-4">
-						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>{t("title")}</TableHead>
-										<TableHead>{t("author")}</TableHead>
-										<TableHead className="hidden md:table-cell">
-											{t("submissionDate")}
-										</TableHead>
-										<TableHead>{t("actions")}</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{articles.filter((article) => article.status === "PENDING")
-										.length === 0 ? (
-										<TableRow>
-											<TableCell colSpan={4} className="text-center py-4">
-												{t("noPendingReviews")}
-											</TableCell>
-										</TableRow>
-									) : (
-										articles
-											.filter((article) => article.status === "PENDING")
-											.map((article: any) => (
-												<TableRow key={article.id}>
-													<TableCell className="font-medium">
-														{typeof article.title === "string"
-															? JSON.parse(article.title)[language] ||
-															  JSON.parse(article.title).en
-															: article.title[
-																	language as keyof typeof article.title
-															  ] || article.title.en}
-													</TableCell>
-													<TableCell>{(article.author as any).name}</TableCell>
-													<TableCell className="hidden md:table-cell">
-														{new Date(article.createdAt).toLocaleDateString()}
-													</TableCell>
-													<TableCell>
-														<div className="flex flex-col sm:flex-row gap-2">
-															<Button
-																size="sm"
-																onClick={() =>
-																	handleReview(article.id, "APPROVED")
-																}>
-																<Check className="mr-2 h-4 w-4" />
-																{t("approve")}
-															</Button>
-															<Button
-																size="sm"
-																variant="destructive"
-																onClick={() =>
-																	handleReview(article.id, "REJECTED")
-																}>
-																<X className="mr-2 h-4 w-4" />
-																{t("reject")}
-															</Button>
-														</div>
-													</TableCell>
-												</TableRow>
-											))
-									)}
-								</TableBody>
-							</Table>
-						</div>
-					</TabsContent>
-					<TabsContent value="approved" className="space-y-4">
-						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>{t("title")}</TableHead>
-										<TableHead>{t("author")}</TableHead>
-										<TableHead className="hidden md:table-cell">
-											{t("submissionDate")}
-										</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{articles
-										.filter((article) => article.status === "APPROVED")
-										.map((article: any) => (
-											<TableRow key={article.id}>
-												<TableCell className="font-medium">
-													{typeof article.title === "string"
-														? JSON.parse(article.title)[language] ||
-														  JSON.parse(article.title).en
-														: article.title[
-																language as keyof typeof article.title
-														  ] || article.title.en}
-												</TableCell>
-												<TableCell>{(article.author as any).name}</TableCell>
-												<TableCell className="hidden md:table-cell">
-													{new Date(article.createdAt).toLocaleDateString()}
-												</TableCell>
-											</TableRow>
-										))}
-								</TableBody>
-							</Table>
-						</div>
-					</TabsContent>
-					<TabsContent value="rejected" className="space-y-4">
-						<div className="bg-white shadow-sm rounded-lg overflow-hidden">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>{t("title")}</TableHead>
-										<TableHead>{t("author")}</TableHead>
-										<TableHead className="hidden md:table-cell">
-											{t("submissionDate")}
-										</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{articles
-										.filter((article) => article.status === "REJECTED")
-										.map((article: any) => (
-											<TableRow key={article.id}>
-												<TableCell className="font-medium">
-													{typeof article.title === "string"
-														? JSON.parse(article.title)[language] ||
-														  JSON.parse(article.title).en
-														: article.title[
-																language as keyof typeof article.title
-														  ] || article.title.en}
-												</TableCell>
-												<TableCell>{(article.author as any).name}</TableCell>
-												<TableCell className="hidden md:table-cell">
-													{new Date(article.createdAt).toLocaleDateString()}
-												</TableCell>
-											</TableRow>
-										))}
-								</TableBody>
-							</Table>
-						</div>
-					</TabsContent>
 				</Tabs>
+				<ViewArticleModal
+					article={viewingArticle}
+					isOpen={isViewModalOpen}
+					onClose={() => setIsViewModalOpen(false)}
+				/>
 			</main>
 		</div>
 	);
