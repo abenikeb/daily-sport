@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,15 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, ChevronDown, LogOut } from "lucide-react";
+import {
+	Bell,
+	ChevronDown,
+	Eye,
+	LogOut,
+	Pencil,
+	Trash2,
+	Upload,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
 	DropdownMenu,
@@ -34,6 +42,17 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+	DialogFooter,
+} from "@/components/ui/dialog";
+import Image from "next/image";
 
 const languages = ["en", "am", "om"];
 
@@ -56,6 +75,7 @@ interface Article {
 	};
 	status: "PENDING" | "APPROVED" | "REJECTED";
 	createdAt: string;
+	tags: any;
 	categoryId: string;
 	subcategoryId: string;
 }
@@ -84,13 +104,12 @@ export default function WriterDashboardClient({
 	const [categories, setCategories] = useState<Category[]>(initialCategories);
 	const [subcategories, setSubcategories] = useState<Category[]>([]);
 	const [selectedLanguage, setSelectedLanguage] = useState("en");
-	// const [formData, setFormData] = useState({
-	// 	title: { en: "", am: "", om: "" },
-	// 	content: { en: "", am: "", om: "" },
-	// 	categoryId: "",
-	// 	subcategoryId: "",
-	// 	tags: "",
-	// });
+
+	const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+	const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+	const [viewingArticle, setViewingArticle] = useState<Article | null | any>(
+		null
+	);
 
 	const [formData, setFormData] = useState({
 		title: { en: "", am: "", om: "" },
@@ -98,8 +117,16 @@ export default function WriterDashboardClient({
 		categoryId: "",
 		subcategoryId: "",
 		tags: "",
-		featuredImage: null,
+		featuredImage: null as File | null,
 	});
+
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (e.target.files && e.target.files[0]) {
+			setFormData((prev) => ({ ...prev, featuredImage: e.target.files![0] }));
+		}
+	};
 
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -135,14 +162,20 @@ export default function WriterDashboardClient({
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		try {
+			const formDataToSend = new FormData();
+			formDataToSend.append("title", JSON.stringify(formData.title));
+			formDataToSend.append("content", JSON.stringify(formData.content));
+			formDataToSend.append("categoryId", formData.categoryId);
+			formDataToSend.append("subcategoryId", formData.subcategoryId);
+			formDataToSend.append("tags", formData.tags);
+			formDataToSend.append("authorId", user.id);
+			if (formData.featuredImage) {
+				formDataToSend.append("featuredImage", formData.featuredImage);
+			}
+
 			const res = await fetch("/api/writer/articles", {
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					...formData,
-					authorId: user.id,
-					tags: formData.tags.split(",").map((tag) => tag.trim()),
-				}),
+				body: formDataToSend,
 			});
 			if (!res.ok) {
 				throw new Error("Failed to submit article");
@@ -157,6 +190,9 @@ export default function WriterDashboardClient({
 				tags: "",
 				featuredImage: null,
 			});
+			if (fileInputRef.current) {
+				fileInputRef.current.value = "";
+			}
 
 			toast({
 				title: t("articleSubmitted"),
@@ -174,13 +210,58 @@ export default function WriterDashboardClient({
 		}
 	};
 
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | any) => {
-		if (e.target.files && e.target.files[0]) {
-			setFormData((prev: any) => ({
-				...prev,
-				featuredImage: e.target.files[0],
-			}));
+	const handleEdit = (article: Article) => {
+		setEditingArticle(article);
+		setFormData({
+			title:
+				typeof article.title === "string"
+					? JSON.parse(article.title)
+					: article.title,
+			content:
+				typeof article.content === "string"
+					? JSON.parse(article.content)
+					: article.content,
+			categoryId: article.categoryId || "",
+			subcategoryId: article.subcategoryId || "",
+			tags: article.tags
+				? article.tags.map((tag: any) => tag.name).join(", ")
+				: "",
+			featuredImage: null,
+		});
+	};
+
+	const handleDelete = async (articleId: string) => {
+		if (confirm(t("confirmDelete"))) {
+			try {
+				const res = await fetch(`/api/writer/articles/${articleId}`, {
+					method: "DELETE",
+				});
+				if (!res.ok) {
+					throw new Error("Failed to delete article");
+				}
+				setArticles(
+					articles.filter((article: any) => article.id !== articleId)
+				);
+				toast({
+					title: t("articleDeleted"),
+					description: t("articleDeletedDescription"),
+					duration: 5000,
+				});
+			} catch (error) {
+				console.error("Error deleting article:", error);
+				toast({
+					title: t("errorDeletingArticle"),
+					description: t("errorDeletingArticleDescription"),
+					variant: "destructive",
+					duration: 5000,
+				});
+			}
 		}
+	};
+
+	const handleView = (article: Article) => {
+		setViewingArticle(article);
+		setIsViewModalOpen(true);
 	};
 
 	const handleLogout = async () => {
@@ -355,15 +436,32 @@ export default function WriterDashboardClient({
 									placeholder="Enter tags separated by commas"
 								/>
 							</div>
+
 							<div className="mb-6">
 								<Label htmlFor="featuredImage">{t("featuredImage")}</Label>
-								<Input
-									id="featuredImage"
-									name="featuredImage"
-									type="file"
-									onChange={handleFileChange}
-									accept="image/*"
-								/>
+								<div className="flex items-center space-x-2">
+									<Input
+										id="featuredImage"
+										name="featuredImage"
+										type="file"
+										onChange={handleFileChange}
+										ref={fileInputRef}
+										accept="image/*"
+										className="flex-grow"
+									/>
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => fileInputRef.current?.click()}>
+										<Upload className="mr-2 h-4 w-4" />
+										{t("uploadImage")}
+									</Button>
+								</div>
+								{formData.featuredImage && (
+									<p className="mt-2 text-sm text-gray-500">
+										{t("selectedFile")}: {formData.featuredImage.name}
+									</p>
+								)}
 							</div>
 
 							<Button type="submit">{t("submitArticle")}</Button>
@@ -374,14 +472,30 @@ export default function WriterDashboardClient({
 							<Table>
 								<TableHeader>
 									<TableRow>
+										<TableHead>{t("tableNo")}</TableHead>
+										<TableHead>{t("image")}</TableHead>
 										<TableHead>{t("title")}</TableHead>
+										<TableHead>{t("content")}</TableHead>
 										<TableHead>{t("submissionDate")}</TableHead>
 										<TableHead>{t("status")}</TableHead>
+										<TableHead>{t("actions")}</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{articles.map((article: any) => (
+									{articles.map((article: Article | any, index: number) => (
 										<TableRow key={article.id}>
+											<TableCell>{index + 1}</TableCell>
+											<TableCell>
+												{article.featuredImage && (
+													<Image
+														src={article.featuredImage}
+														alt={t("featuredImage")}
+														width={50}
+														height={50}
+														className="object-cover rounded"
+													/>
+												)}
+											</TableCell>
 											<TableCell className="font-medium">
 												{typeof article.title === "string"
 													? JSON.parse(article.title)[language] ||
@@ -389,6 +503,15 @@ export default function WriterDashboardClient({
 													: article.title[
 															language as keyof typeof article.title
 													  ] || article.title.en}
+											</TableCell>
+											<TableCell>
+												<Button
+													variant="ghost"
+													size="sm"
+													onClick={() => handleView(article)}>
+													<Eye className="mr-2 h-4 w-4" />
+													{t("view")}
+												</Button>
 											</TableCell>
 											<TableCell>
 												{new Date(article.createdAt).toLocaleDateString()}
@@ -405,6 +528,24 @@ export default function WriterDashboardClient({
 													{t(article.status.toLowerCase())}
 												</span>
 											</TableCell>
+											<TableCell>
+												<div className="flex space-x-2">
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={() => handleEdit(article)}>
+														<Pencil className="mr-2 h-4 w-4" />
+														{t("edit")}
+													</Button>
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={() => handleDelete(article.id)}>
+														<Trash2 className="mr-2 h-4 w-4" />
+														{t("delete")}
+													</Button>
+												</div>
+											</TableCell>
 										</TableRow>
 									))}
 								</TableBody>
@@ -412,6 +553,52 @@ export default function WriterDashboardClient({
 						</div>
 					</TabsContent>
 				</Tabs>
+				{/* View Article Modal */}
+				<Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>{t("articleDetails")}</DialogTitle>
+						</DialogHeader>
+						{viewingArticle && (
+							<div className="mt-4">
+								<h3 className="text-lg font-semibold mb-2">
+									{typeof viewingArticle.title === "string"
+										? JSON.parse(viewingArticle.title)[language] ||
+										  JSON.parse(viewingArticle.title).en
+										: viewingArticle.title[
+												language as keyof typeof viewingArticle.title
+										  ] || viewingArticle.title.en}
+								</h3>
+								<p className="text-sm text-gray-500 mb-4">
+									{t("submittedOn")}:{" "}
+									{new Date(viewingArticle.createdAt).toLocaleDateString()}
+								</p>
+								{viewingArticle?.featuredImage && (
+									<Image
+										src={viewingArticle.featuredImage}
+										alt={t("featuredImage")}
+										width={300}
+										height={200}
+										className="object-cover rounded mb-4"
+									/>
+								)}
+								<div className="prose max-w-none">
+									{typeof viewingArticle.content === "string"
+										? JSON.parse(viewingArticle.content)[language] ||
+										  JSON.parse(viewingArticle.content).en
+										: viewingArticle.content[
+												language as keyof typeof viewingArticle.content
+										  ] || viewingArticle.content.en}
+								</div>
+							</div>
+						)}
+						<DialogFooter>
+							<Button onClick={() => setIsViewModalOpen(false)}>
+								{t("close")}
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
 			</main>
 		</div>
 	);

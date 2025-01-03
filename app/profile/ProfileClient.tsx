@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,29 +26,64 @@ interface User {
 	id: string;
 	name: string;
 	phone: string;
-	favoriteNews: string[];
 	viewCount: number;
-	isSubscribed: boolean;
+	subscriptionStatus:
+		| "ACTIVE"
+		| "UNSUBSCRIBE"
+		| "PENDING"
+		| "INACTIVE"
+		| "RENEW";
 	subscriptionStart: string;
 	subscriptionEnd: string;
+	lastBilledAt: string;
+	subscribedAt: string;
+	activateAt: string;
+	refNo: string;
+	contractNo: string;
+}
+
+interface FavoriteArticle {
+	id: string;
+	title: string;
+	category: string;
 }
 
 interface ProfileClientProps {
 	user: User;
 }
 
-export default function ProfileClient({ user }: ProfileClientProps | any) {
+export default function ProfileClient({ user }: ProfileClientProps) {
 	const router = useRouter();
 	const { toast } = useToast();
-	const [isSubscribed, setIsSubscribed] = useState(user.isSubscribed);
+	const [isSubscribed, setIsSubscribed] = useState(
+		user.subscriptionStatus === "ACTIVE"
+	);
+	const [favoriteArticles, setFavoriteArticles] = useState<FavoriteArticle[]>(
+		[]
+	);
 
-	// Mock data for favorite categories
-	const favoriteCategories = [
-		{ name: "Football", color: "bg-red-500" },
-		{ name: "Basketball", color: "bg-blue-500" },
-		{ name: "Tennis", color: "bg-green-500" },
-		{ name: "Formula 1", color: "bg-yellow-500" },
-	];
+	useEffect(() => {
+		const fetchFavoriteArticles = async () => {
+			try {
+				const response = await fetch(`/api/favorites/${user.id}`);
+				if (response.ok) {
+					const data = await response.json();
+					setFavoriteArticles(data);
+				} else {
+					throw new Error("Failed to fetch favorite articles");
+				}
+			} catch (error) {
+				console.error("Error fetching favorite articles:", error);
+				toast({
+					title: "Error",
+					description: "Failed to load favorite articles. Please try again.",
+					variant: "destructive",
+				});
+			}
+		};
+
+		fetchFavoriteArticles();
+	}, [user.id, toast]);
 
 	const handleLogout = async () => {
 		try {
@@ -67,19 +102,22 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 
 	const handleUnsubscribe = async () => {
 		try {
-			const response = await fetch("/api/user/unsubscribe", {
+			const response = await fetch("/api/user/subscription", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
+				body: JSON.stringify({ userId: user.id, action: "unsubscribe" }),
 			});
 
 			if (response.ok) {
 				setIsSubscribed(false);
 				toast({
-					title: "Unsubscribed",
-					description: "You have been unsubscribed from our service.",
+					title: "Success",
+					description: "You have been unsubscribed successfully.",
 				});
+				// Logout after unsubscribing
+				await handleLogout();
 			} else {
 				throw new Error("Failed to unsubscribe");
 			}
@@ -102,17 +140,14 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 	};
 
 	const totalSubscriptionDays = () => {
-		// const start = new Date(user.subscriptionStart);
-		// const end = new Date(user.subscriptionEnd);
-		const start = new Date(1 / 1 / 2025);
-		const end = new Date(1 / 2 / 2025);
+		const start = new Date(user.subscriptionStart);
+		const end = new Date(user.subscriptionEnd);
 		const diffTime = Math.abs(end.getTime() - start.getTime());
 		return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 	};
 
 	const remainingDays = calculateRemainingDays();
 	const totalDays = totalSubscriptionDays();
-	// const progress = ((totalDays - remainingDays) / totalDays) * 100;
 	const progress = ((totalDays - remainingDays) / totalDays) * 100;
 
 	return (
@@ -147,7 +182,8 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 											<Button
 												onClick={handleUnsubscribe}
 												variant="secondary"
-												className="bg-white text-blue-600 hover:bg-gray-100">
+												className="bg-white text-blue-600 hover:bg-gray-100"
+												disabled={!isSubscribed}>
 												<BellOff className="mr-2 h-4 w-4 mb-2" />
 												Unsubscribe
 											</Button>
@@ -172,18 +208,50 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 						<CardHeader className="bg-blue-500 text-white">
 							<CardTitle className="flex items-center text-2xl">
 								<Calendar className="mr-2 h-6 w-6" />
-								Subscription Period
+								Subscription Details
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="p-6">
+							<div className="grid grid-cols-2 gap-4 mb-4">
+								<div>
+									<p className="text-sm text-gray-600">Status</p>
+									<p className="font-semibold">{user.subscriptionStatus}</p>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600">Last Billed</p>
+									<p className="font-semibold">
+										{new Date(user.lastBilledAt).toLocaleDateString()}
+									</p>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600">Subscribed On</p>
+									<p className="font-semibold">
+										{new Date(user.subscribedAt).toLocaleDateString()}
+									</p>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600">Next Activation</p>
+									<p className="font-semibold">
+										{user.activateAt
+											? new Date(user.activateAt).toLocaleDateString()
+											: "N/A"}
+									</p>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600">Reference No.</p>
+									<p className="font-semibold">{user.refNo || "N/A"}</p>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600">Contract No.</p>
+									<p className="font-semibold">{user.contractNo || "N/A"}</p>
+								</div>
+							</div>
 							<div className="flex justify-between mb-2">
 								<span className="text-gray-600">
-									{/* Start: {new Date(user.subscriptionStart).toLocaleDateString()} */}
-									Start: 1/1/2025
+									Start: {new Date(user.subscriptionStart).toLocaleDateString()}
 								</span>
 								<span className="text-gray-600">
-									{/* End: {new Date(user.subscriptionEnd).toLocaleDateString()} */}
-									End: 2/1/2025
+									End: {new Date(user.subscriptionEnd).toLocaleDateString()}
 								</span>
 							</div>
 							<Progress
@@ -192,41 +260,26 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 								// indicatorClassName="bg-blue-500"
 							/>
 							<p className="mt-2 text-center text-gray-700">
-								{20} hours remaining out of {1} days
-								{/* {remainingDays} days remaining out of {totalDays} days */}
+								{remainingDays} days remaining out of {totalDays} days
 							</p>
 						</CardContent>
 					</Card>
 					<CardContent className="p-6">
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-							{/* <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
-								<CardHeader className="bg-green-500 text-white">
-									<CardTitle className="flex items-center text-2xl">
-										<Eye className="mr-2 h-6 w-6" />
-										View Count
-									</CardTitle>
-								</CardHeader>
-								<CardContent className="p-6">
-									<p className="text-4xl font-bold text-gray-800">
-										{user.viewCount}
-									</p>
-									<p className="text-sm text-gray-500">Total article views</p>
-								</CardContent>
-							</Card> */}
 							<Card className="bg-white shadow-lg rounded-lg overflow-hidden">
 								<CardHeader className="bg-red-500 text-white">
 									<CardTitle className="flex items-center text-2xl">
 										<Newspaper className="mr-2 h-6 w-6" />
-										Favorite News Categories
+										Favorite Articles
 									</CardTitle>
 								</CardHeader>
 								<CardContent className="p-6">
 									<div className="flex flex-wrap gap-2">
-										{favoriteCategories.map((category, index) => (
+										{favoriteArticles.map((article) => (
 											<Badge
-												key={index}
-												className={`${category.color} text-white px-3 py-1 rounded-full text-sm`}>
-												{category.name}
+												key={article.id}
+												className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
+												{article.title}
 											</Badge>
 										))}
 									</div>
@@ -239,62 +292,3 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 		</div>
 	);
 }
-
-// "use client";
-
-// import { useRouter } from "next/navigation";
-// import { Button } from "@/components/ui/button";
-// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// import { LogOut } from "lucide-react";
-// import { useToast } from "@/hooks/use-toast";
-
-// interface User {
-// 	id: string;
-// 	name: string;
-// 	phone: string;
-// }
-
-// interface ProfileClientProps {
-// 	user: User;
-// }
-
-// export default function ProfileClient({ user }: ProfileClientProps | any) {
-// 	const router = useRouter();
-// 	const { toast } = useToast();
-
-// 	const handleLogout = async () => {
-// 		try {
-// 			await fetch("/api/auth/logout", { method: "POST" });
-// 			router.push("/");
-// 			window.location.reload();
-// 		} catch (error) {
-// 			console.error("Logout error:", error);
-// 		}
-// 	};
-
-// 	return (
-// 		<div className="min-h-screen bg-gray-100">
-// 			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-// 				<div className="bg-white shadow-sm rounded-lg p-6">
-// 					<div className="flex items-center space-x-4 mb-6">
-// 						<Avatar className="h-16 w-16">
-// 							<AvatarImage
-// 								src="/assets/icons/AvatarImage.svg"
-// 								alt="User's avatar"
-// 							/>
-// 							<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-// 						</Avatar>
-// 						<div>
-// 							<h2 className="text-2xl font-semibold">{user.name}</h2>
-// 							<p className="text-gray-600">{user.phone}</p>
-// 						</div>
-// 					</div>
-// 					<Button onClick={handleLogout} variant="outline">
-// 						<LogOut className="mr-2 h-4 w-4" />
-// 						Logout
-// 					</Button>
-// 				</div>
-// 			</main>
-// 		</div>
-// 	);
-// }

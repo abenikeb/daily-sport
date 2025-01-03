@@ -37,5 +37,12 @@ export default async function ArticleDetailPage({
 		return <div>Article not found</div>;
 	}
 
-	return <ArticleDetailClient article={article} isAuthenticated={!!user} />;
+	return (
+		<ArticleDetailClient
+			article={article}
+			isAuthenticated={!!user}
+			articleId={params.id}
+			userId={user?.id}
+		/>
+	);
 }

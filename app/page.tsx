@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Eye } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ interface Article {
 	featuredImage: string | null;
 	createdAt: string;
 	category: string;
+	viewCount: number;
 }
 
 export default function HomePage() {
@@ -98,6 +99,10 @@ export default function HomePage() {
 								<p className="text-white text-sm">
 									{getLocalizedContent(articles[0].content).slice(0, 100)}...
 								</p>
+								<div className="flex items-center text-white text-sm mt-2">
+									<Eye className="w-4 h-4 mr-1" />
+									{articles[0].viewCount} {t("views")}
+								</div>
 							</div>
 						</Link>
 					) : null}
@@ -118,11 +123,7 @@ export default function HomePage() {
 									selectedCategory === category
 										? "bg-primary text-white"
 										: "bg-gray-100 text-gray-800 hover:bg-primary hover:text-white"
-								)}
-								onClick={(e) => {
-									e.preventDefault();
-									setSelectedCategory(category);
-								}}>
+								)}>
 								{t(category)}
 							</Link>
 						))}
@@ -169,9 +170,15 @@ export default function HomePage() {
 										<p className="text-sm text-gray-600 mb-2">
 											{getLocalizedContent(article.content).slice(0, 50)}...
 										</p>
-										<div className="flex items-center text-primary text-xs font-medium">
-											{t("readMore")}
-											<ChevronRight className="w-4 h-4 ml-1" />
+										<div className="flex items-center justify-between">
+											<div className="flex items-center text-primary text-xs font-medium">
+												{t("readMore")}
+												<ChevronRight className="w-4 h-4 ml-1" />
+											</div>
+											<div className="flex items-center text-gray-500 text-xs">
+												<Eye className="w-4 h-4 mr-1" />
+												{article.viewCount} {t("views")}
+											</div>
 										</div>
 									</div>
 								</div>
