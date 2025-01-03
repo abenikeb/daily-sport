@@ -124,6 +124,16 @@ export default function ArticleDetailClient({
 		}
 	};
 
+	const [isMounted, setIsMounted] = useState(false);
+
+	useEffect(() => {
+		setIsMounted(true);
+		if (!localIsAuthenticated) {
+			setShowLoginModal(true);
+			// return;
+		}
+	}, [localIsAuthenticated]);
+
 	const handleLoginSuccess = () => {
 		setLocalIsAuthenticated(true);
 		setShowLoginModal(false);
@@ -134,7 +144,10 @@ export default function ArticleDetailClient({
 	const handleLoginModalClose = () => {
 		setShowLoginModal(false);
 		// Remove the redirection to home page
-		// router.push("/");
+		setShowLoginModal(false);
+		if (!localIsAuthenticated && isMounted) {
+			router.push("/");
+		}
 	};
 
 	const handleFavoriteToggle = async () => {
@@ -187,6 +200,10 @@ export default function ArticleDetailClient({
 		}
 	};
 
+	if (!localIsAuthenticated && !showLoginModal) {
+		return null;
+	}
+
 	return (
 		<div className="w-full mx-auto bg-gray-50 min-h-screen flex flex-col pb-12">
 			{/* Header */}
@@ -216,7 +233,7 @@ export default function ArticleDetailClient({
 					</div>
 					<div className="p-6">
 						<div className="flex justify-between items-start mb-4">
-							<h1 className="text-3xl font-bold text-gray-900 mb-2">
+							<h1 className="text-xl font-bold text-gray-900 mb-2">
 								{getLocalizedContent(article.title)}
 							</h1>
 							<div className="flex items-center space-x-2">

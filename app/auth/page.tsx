@@ -33,8 +33,20 @@ export default function AuthPage() {
 			<div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-md">
 				<div className="text-center">
 					<h2 className="text-3xl font-extrabold text-gray-900">
-						{isLogin ? "Login" : "Sign Up"}
+						{isLogin ? "Welcome Back" : "Subscribe Now"}
 					</h2>
+
+					{/* <DialogHeader>
+						<DialogTitle className="text-2xl font-bold">
+							{isLogin ? "Welcome Back" : "Subscribe Now"}
+						</DialogTitle>
+						<DialogDescription>
+							{isLogin
+								? "Log in to access your account and all our features."
+								: "Sign up to get started with our amazing services."}
+						</DialogDescription>
+					</DialogHeader> */}
+
 					<p className="mt-2 text-sm text-gray-600">
 						{isLogin ? "Don't have an account?" : "Already have an account?"}
 						<Button
