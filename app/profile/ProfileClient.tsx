@@ -52,7 +52,7 @@ interface ProfileClientProps {
 	user: User;
 }
 
-export default function ProfileClient({ user }: ProfileClientProps) {
+export default function ProfileClient({ user }: ProfileClientProps | any) {
 	const router = useRouter();
 	const { toast } = useToast();
 	const [isSubscribed, setIsSubscribed] = useState(
