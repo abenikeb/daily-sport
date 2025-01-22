@@ -115,6 +115,15 @@ const translations: Record<Language, Record<string, string>> = {
 		errorReviewingArticle: "Error Reviewing Article",
 		errorReviewingArticleDescription:
 			"There was an error reviewing the article. Please try again.",
+		subscribers: "Subscribers",
+		errorFetchingSubscribers: "Error Fetching Subscribers",
+		errorFetchingSubscribersDescription:
+			"There was an error fetching the subscribers list. Please try again.",
+		notProvided: "Not Provided",
+		notAvailable: "N/A",
+
+		subscriptionStart: "Subscription Start",
+		subscriptionEnd: "Subscription End",
 	},
 	am: {
 		home: "መነሻ",

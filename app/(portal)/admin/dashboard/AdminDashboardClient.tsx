@@ -35,12 +35,13 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { Article, ArticleStatus } from "@prisma/client";
+import type { Article, ArticleStatus } from "@prisma/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 import { ViewArticleModal } from "@/components/ViewArticleModal";
 import { Eye } from "lucide-react";
 import Image from "next/image";
+import { SubscribersList } from "@/components/SubscribersList";
 
 interface Category {
 	id: string;
@@ -189,46 +190,6 @@ export default function AdminDashboard({
 		}
 	};
 
-	const handleDeleteSubcategory = async (
-		subcategoryId: string,
-		categoryId: string
-	) => {
-		try {
-			const response = await fetch(
-				`/api/admin/subcategories/${subcategoryId}`,
-				{
-					method: "DELETE",
-				}
-			);
-
-			if (!response.ok) throw new Error("Failed to delete subcategory");
-
-			setCategories(
-				categories.map((category) =>
-					category.id === categoryId
-						? {
-								...category,
-								subcategories: category.subcategories.filter(
-									(sub) => sub.id !== subcategoryId
-								),
-						  }
-						: category
-				)
-			);
-			toast({
-				title: "Success",
-				description: "Subcategory deleted successfully",
-			});
-		} catch (error) {
-			console.error("Delete subcategory error:", error);
-			toast({
-				title: "Error",
-				description: "Failed to delete subcategory",
-				variant: "destructive",
-			});
-		}
-	};
-
 	const handleReview = async (id: string, newStatus: ArticleStatus) => {
 		try {
 			const res = await fetch("/api/admin/articles", {
@@ -264,41 +225,6 @@ export default function AdminDashboard({
 			});
 		}
 	};
-
-	// const handleReview = async (id: string, newStatus: ArticleStatus) => {
-	// 	const res = await fetch("/api/admin/articles", {
-	// 		method: "PUT",
-	// 		headers: { "Content-Type": "application/json" },
-	// 		body: JSON.stringify({ id, status: newStatus }),
-	// 	});
-	// 	if (res.ok) {
-	// 		setArticles(
-	// 			articles.map((article) =>
-	// 				article.id === id ? { ...article, status: newStatus } : article
-	// 			)
-	// 		);
-	// 		if (newStatus === "APPROVED") {
-	// 			toast({
-	// 				title: t("articleApproved"),
-	// 				description: t("articleApprovedDescription"),
-	// 				duration: 5000,
-	// 			});
-	// 		} else if (newStatus === "REJECTED") {
-	// 			toast({
-	// 				title: t("articleRejected"),
-	// 				description: t("articleRejectedDescription"),
-	// 				duration: 5000,
-	// 			});
-	// 		}
-	// 	} else {
-	// 		toast({
-	// 			title: t("errorReviewingArticle"),
-	// 			description: t("errorReviewingArticleDescription"),
-	// 			variant: "destructive",
-	// 			duration: 5000,
-	// 		});
-	// 	}
-	// };
 
 	const handleView = (article: Article) => {
 		setViewingArticle(article);
@@ -337,6 +263,11 @@ export default function AdminDashboard({
 										variant="ghost"
 										onClick={() => setIsMobileMenuOpen(false)}>
 										{t("rejected")}
+									</Button>
+									<Button
+										variant="ghost"
+										onClick={() => setIsMobileMenuOpen(false)}>
+										{t("subscribers")}
 									</Button>
 								</nav>
 							</SheetContent>
@@ -388,6 +319,7 @@ export default function AdminDashboard({
 						<TabsTrigger value="categorySettings">
 							{t("categorySettings")}
 						</TabsTrigger>
+						<TabsTrigger value="subscribers">{t("subscribers")}</TabsTrigger>
 					</TabsList>
 
 					<TabsContent value="pending" className="space-y-4">
@@ -423,7 +355,9 @@ export default function AdminDashboard({
 													<TableCell>
 														{article.featuredImage && (
 															<Image
-																src={article.featuredImage}
+																src={
+																	article.featuredImage || "/placeholder.svg"
+																}
 																alt={t("featuredImage")}
 																width={50}
 																height={50}
@@ -627,6 +561,11 @@ export default function AdminDashboard({
 									))}
 								</TableBody>
 							</Table>
+						</div>
+					</TabsContent>
+					<TabsContent value="subscribers" className="space-y-4">
+						<div className="bg-white shadow-sm rounded-lg overflow-hidden p-6">
+							<SubscribersList />
 						</div>
 					</TabsContent>
 				</Tabs>
