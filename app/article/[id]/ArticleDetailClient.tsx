@@ -48,7 +48,7 @@ export default function ArticleDetailClient({
 	isAuthenticated,
 	articleId,
 	userId,
-}: ArticleDetailClientProps) {
+}: ArticleDetailClientProps | any) {
 	const { t, language } = useLanguage();
 	const router = useRouter();
 	const [showLoginModal, setShowLoginModal] = useState(false);
