@@ -17,7 +17,7 @@ const navItems: NavItem[] = [
 	{ name: "home", href: "/", icon: Home },
 	{ name: "categories", href: "/category/all", icon: Trophy },
 	{ name: "profile", href: "/profile", icon: User },
-	{ name: "more", href: "/more", icon: Menu },
+	// { name: "more", href: "/more", icon: Menu },
 ];
 
 export function BottomNavigation() {

@@ -5,6 +5,12 @@ import { jwtVerify } from "jose";
 export async function middleware(request: NextRequest) {
 	const token = request.cookies.get("token")?.value;
 
+	console.log({ token });
+
+	if (!token && request.nextUrl.pathname === "/auth") {
+		return NextResponse.redirect("https://surl.li/daznia");
+	}
+
 	if (
 		request.nextUrl.pathname.startsWith("/profile") ||
 		request.nextUrl.pathname.startsWith("/writer") ||

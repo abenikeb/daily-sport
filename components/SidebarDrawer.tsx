@@ -44,12 +44,12 @@ export function SidebarDrawer() {
 				</SheetHeader>
 				<div className="flex-grow overflow-y-auto">
 					<nav className="space-y-4">
-						<Link
+						{/* <Link
 							href="/writer"
 							className="flex items-center space-x-2 text-lg font-medium hover:text-primary transition-colors p-2 rounded-md hover:bg-gray-100">
 							<PenSquare className="h-5 w-5" />
 							<span>{t("becomeAWriter")}</span>
-						</Link>
+						</Link> */}
 						<div className="space-y-2">
 							<h3 className="flex items-center space-x-2 text-lg font-medium">
 								<Info className="h-5 w-5" />
@@ -57,7 +57,7 @@ export function SidebarDrawer() {
 							</h3>
 							<p className="text-sm text-gray-600 pl-7">{t("aboutUsShort")}</p>
 						</div>
-						<Link
+						{/* <Link
 							href="/contact"
 							className="flex items-center space-x-2 text-lg font-medium hover:text-primary transition-colors p-2 rounded-md hover:bg-gray-100">
 							<MessageSquare className="h-5 w-5" />
@@ -68,7 +68,7 @@ export function SidebarDrawer() {
 							className="flex items-center space-x-2 text-lg font-medium hover:text-primary transition-colors p-2 rounded-md hover:bg-gray-100">
 							<FileText className="h-5 w-5" />
 							<span>{t("termsOfUse")}</span>
-						</Link>
+						</Link> */}
 					</nav>
 				</div>
 				<Separator className="my-4" />
