@@ -57,7 +57,8 @@ export async function GET(request: NextRequest) {
 				...article,
 				title: parsedTitle,
 				content: parsedContent,
-				viewCount: article.viewCount || 0,
+				// viewCount: article.viewCount || 0,
+				viewCount:0
 			};
 		});
 

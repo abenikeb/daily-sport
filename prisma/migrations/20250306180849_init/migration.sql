@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'UNSUBSCRIBE', 'PENDING', 'INACTIVE', 'RENEW');
+
+-- CreateEnum
 CREATE TYPE "Role" AS ENUM ('USER', 'WRITER', 'ADMIN');
 
 -- CreateEnum
@@ -10,13 +13,22 @@ CREATE TYPE "NotificationType" AS ENUM ('ARTICLE_APPROVED', 'ARTICLE_REJECTED', 
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
+    "email" TEXT,
     "password" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "phone" TEXT,
+    "name" TEXT,
     "role" "Role" NOT NULL DEFAULT 'USER',
     "profilePicture" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "subscriptionStatus" "SubscriptionStatus" NOT NULL DEFAULT 'ACTIVE',
+    "subscriptionStart" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "subscriptionEnd" TIMESTAMP(3),
+    "lastBilledAt" TEXT,
+    "subscribedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "activateAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "refNo" TEXT,
+    "contractNo" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -58,8 +70,19 @@ CREATE TABLE "Article" (
     "featuredImage" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "viewCount" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "Article_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "FavoriteArticle" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "articleId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "FavoriteArticle_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -108,6 +131,9 @@ CREATE TABLE "_ArticleToTag" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
 
 -- CreateIndex
@@ -115,6 +141,9 @@ CREATE UNIQUE INDEX "Subcategory_name_categoryId_key" ON "Subcategory"("name", "
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Tag_name_key" ON "Tag"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "FavoriteArticle_userId_articleId_key" ON "FavoriteArticle"("userId", "articleId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Like_userId_articleId_key" ON "Like"("userId", "articleId");
@@ -133,6 +162,12 @@ ALTER TABLE "Article" ADD CONSTRAINT "Article_categoryId_fkey" FOREIGN KEY ("cat
 
 -- AddForeignKey
 ALTER TABLE "Article" ADD CONSTRAINT "Article_subcategoryId_fkey" FOREIGN KEY ("subcategoryId") REFERENCES "Subcategory"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FavoriteArticle" ADD CONSTRAINT "FavoriteArticle_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FavoriteArticle" ADD CONSTRAINT "FavoriteArticle_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "Article"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Comment" ADD CONSTRAINT "Comment_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
