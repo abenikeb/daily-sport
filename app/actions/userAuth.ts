@@ -6,6 +6,12 @@ import { nanoid } from "nanoid";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+interface LoginResult {
+	success?: boolean;
+	error?: string;
+	redirectUrl?: any;
+}
+
 export async function signupUser(formData: FormData) {
 	const name = formData.get("name") as string;
 	const phone = formData.get("phone") as string;
@@ -22,13 +28,43 @@ export async function signupUser(formData: FormData) {
 		}
 
 		const hashedPassword = await bcrypt.hash(password, 10);
+
+		// Set up subscription details
+		const currentDate = new Date();
+		const subscriptionEnd = new Date(currentDate);
+		subscriptionEnd.setDate(currentDate.getDate() + 3); // 3 days free trial
+
+		// const user = await prisma.user.create({
+		// 	data: {
+		// 		name,
+		// 		phone,
+		// 		password: hashedPassword,
+		// 	} as any,
+		// });
+
+		// Create the user
 		const user = await prisma.user.create({
 			data: {
-				name,
 				phone,
 				password: hashedPassword,
-			} as any,
+				name: name || `User-${phone.substring(phone.length - 4)}`,
+				role: "USER",
+				subscriptionStatus: "ACTIVE",
+				subscriptionStart: currentDate,
+				subscriptionEnd: subscriptionEnd,
+			},
 		});
+
+		// return NextResponse.json({
+		// 	message: "User registered successfully",
+		// 	user: {
+		// 		id: user.id,
+		// 		phone: user.phone,
+		// 		name: user.name,
+		// 		role: user.role,
+		// 		subscriptionStatus: user.subscriptionStatus,
+		// 	},
+		// });
 
 		const token = await new SignJWT({
 			userId: user.id,
@@ -53,23 +89,42 @@ export async function signupUser(formData: FormData) {
 	}
 }
 
-export async function loginUser(formData: FormData) {
-	const phone = formData.get("phone") as string;
+export async function loginUser(formData: FormData): Promise<LoginResult> {
+	const mobile = formData.get("mobile") as string;
 	const password = formData.get("password") as string;
 
-	if (!phone || !password) {
+	console.log({
+		mobile,
+		password,
+	});
+
+	if (!mobile || !password) {
 		return { error: "Phone and password are required" };
 	}
 
 	try {
-		const user = await prisma.user.findUnique({ where: { phone } });
+		const user = await prisma.user.findUnique({ where: { phone: mobile } });
+		console.log({
+			user,
+		});
+
 		if (!user) {
-			return { error: "Invalid credentials" };
+			// return { error: "Invalid credentials" };
+			return {
+				success: false,
+				error: "Invalid credentials",
+			};
 		}
 
 		const passwordMatch = await bcrypt.compare(password, user.password);
+		console.log({
+			passwordMatch,
+		});
 		if (!passwordMatch) {
-			return { error: "Invalid credentials" };
+			return {
+				success: false,
+				error: "Invalid credentials",
+			};
 		}
 
 		const token = await new SignJWT({
@@ -88,9 +143,18 @@ export async function loginUser(formData: FormData) {
 			secure: process.env.NODE_ENV === "production",
 		});
 
-		return { success: "Logged in successfully" };
+		return {
+			success: true,
+			redirectUrl: "/",
+		};
+
+		// return { success: "Logged in successfully" };
 	} catch (error) {
 		console.error("Login error:", error);
-		return { error: "An error occurred during login" };
+		return {
+			success: false,
+			error: "An error occurred during login",
+		};
+		// return { error: "An error occurred during login" };
 	}
 }
