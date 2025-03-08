@@ -198,6 +198,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Smartphone, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { ErrorModal } from "@/components/error-modal";
+import { loginUser } from "@/app/actions/userAuth";
 
 const loginSchema = z.object({
 	mobile: z
@@ -274,13 +275,13 @@ export function LoginForm({ redirectUrl }: LoginFormProps) {
 	}
 
 	// Mock function for the demo
-	async function loginUser(formData: FormData) {
-		// Simulate API call
-		await new Promise((resolve) => setTimeout(resolve, 1500));
+	// async function loginUser(formData: FormData) {
+	// 	// Simulate API call
+	// 	await new Promise((resolve) => setTimeout(resolve, 1500));
 
-		// For demo purposes, always return success
-		return { success: true };
-	}
+	// 	// For demo purposes, always return success
+	// 	return { success: true };
+	// }
 
 	return (
 		<div className="p-6 sm:p-8">

@@ -72,14 +72,14 @@ export default function AuthClient() {
 						<div className="flex items-center">
 							<div className="bg-white dark:bg-gray-800 p-3 rounded-full shadow-md mr-4">
 								<Image
-									src="/placeholder.svg?height=60&width=60&text=Tocido"
+									src="/assets/images/logo_tecedo.png?height=60&width=60&text=Tocido"
 									alt="Tocido PLC Logo"
 									width={60}
 									height={60}
 									className="rounded-full object-contain"
 								/>
 							</div>
-							<h1 className="text-3xl font-bold text-secondary dark:text-secondary-foreground">
+							<h1 className="text-3xl font-bold text-blue-950 dark:text-secondary-foreground">
 								Tocido PLC
 							</h1>
 						</div>
