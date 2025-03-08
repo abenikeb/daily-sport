@@ -441,14 +441,21 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 												</p>
 											</div>
 										</CardContent>
-										<CardFooter className="flex justify-center p-6 bg-gray-50">
+										<CardFooter className="flex justify-center p-6 bg-gray-50 flex-col space-y-2">
 											<Button
 												variant="outline"
-												className="border-blue-500 text-blue-500 hover:bg-blue-50"
+												className="border-blue-500 text-blue-500 hover:bg-blue-50 w-3/4 m-auto"
 												onClick={() => setActiveTab("subscription")}>
 												<Calendar className="mr-2 h-4 w-4" />
 												{t("viewSubscriptionDetails")}
 											</Button>
+											<a
+												href="sms:8436;?&body=Stop"
+												className="border-red-500 text-red-500 hover:bg-red-50 border-2 rounded-md w-3/4 m-auto flex justify-center items-center py-1">
+												<BellOff className="mr-2 h-4 w-4" />
+												{t("unsubscribe")}
+											</a>
+
 											{/* <Button
 												variant="outline"
 												className="border-red-500 text-red-500 hover:bg-red-50"
