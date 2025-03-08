@@ -242,7 +242,7 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-			<main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
@@ -441,7 +441,7 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 												</p>
 											</div>
 										</CardContent>
-										<CardFooter className="flex justify-between p-6 bg-gray-50">
+										<CardFooter className="flex justify-center p-6 bg-gray-50">
 											<Button
 												variant="outline"
 												className="border-blue-500 text-blue-500 hover:bg-blue-50"
@@ -449,14 +449,14 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 												<Calendar className="mr-2 h-4 w-4" />
 												{t("viewSubscriptionDetails")}
 											</Button>
-											<Button
+											{/* <Button
 												variant="outline"
 												className="border-red-500 text-red-500 hover:bg-red-50"
 												onClick={() => setShowConfirmUnsubscribe(true)}
 												disabled={!isSubscribed || isLoading}>
 												<BellOff className="mr-2 h-4 w-4" />
 												{t("unsubscribe")}
-											</Button>
+											</Button> */}
 										</CardFooter>
 									</Card>
 

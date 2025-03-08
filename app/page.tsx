@@ -353,7 +353,7 @@ export default function HomePage() {
 				</div>
 			</section>
 
-			<main className="flex-grow max-w-7xl mx-auto w-full px-4 py-6">
+			<main className="flex-grow max-w-7xl mx-auto w-full px-4 pt-6 pb-20">
 				{/* Featured Articles Carousel */}
 				{!isSearching && featuredArticles.length > 0 && (
 					<section className="mb-10">

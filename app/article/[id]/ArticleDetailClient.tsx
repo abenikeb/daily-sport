@@ -115,11 +115,10 @@ export default function ArticleDetailClient({
 	const [fontSizeLevel, setFontSizeLevel] = useState(1); // 0: small, 1: medium, 2: large
 	const [isDarkMode, setIsDarkMode] = useState(false);
 
-	// Mock images for gallery
 	const galleryImages = [
-		article.featuredImage || "/placeholder.svg?height=600&width=800",
-		"/placeholder.svg?height=600&width=800&text=Image+2",
-		"/placeholder.svg?height=600&width=800&text=Image+3",
+		article.featuredImage || "/assets/images/fb1.png?height=600&width=800",
+		"/assets/images/fb2.png?height=600&width=800&text=Image+2",
+		"/assets/images/fb1.png?height=600&width=800&text=Image+3",
 	];
 
 	// Mock table of contents
@@ -906,13 +905,13 @@ export default function ArticleDetailClient({
 										/>
 										<span>{formatNumber(likeCount)}</span>
 									</Button>
-									<Button
+									{/* <Button
 										variant="ghost"
 										size="sm"
 										className="flex items-center space-x-1">
 										<MessageSquare className="w-5 h-5" />
 										<span>{formatNumber(commentCount)}</span>
-									</Button>
+									</Button> */}
 								</div>
 								<div className="flex items-center space-x-2">
 									<Button
