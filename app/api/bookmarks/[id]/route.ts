@@ -10,7 +10,7 @@ export async function GET(
 	}
 
 	try {
-		const favoriteArticles = await prisma.favoriteArticle.findMany({
+		const bookmarkedArticles = await prisma.bookmark.findMany({
 			where: { userId: params.id },
 			include: {
 				article: {
@@ -21,17 +21,17 @@ export async function GET(
 			},
 		});
 
-		const formattedFavorites = favoriteArticles.map((favorite) => ({
-			id: favorite.articleId,
-			title: favorite.article.title,
-			category: favorite.article.category?.name || "Uncategorized",
-			featuredImage: favorite.article.featuredImage,
-			createdAt: favorite.article.createdAt,
+		const formattedBookmarks = bookmarkedArticles.map((bookmark) => ({
+			id: bookmark.articleId,
+			title: bookmark.article.title,
+			category: bookmark.article.category?.name || "Uncategorized",
+			featuredImage: bookmark.article.featuredImage,
+			createdAt: bookmark.article.createdAt,
 		}));
 
-		return NextResponse.json(formattedFavorites);
+		return NextResponse.json(formattedBookmarks);
 	} catch (error) {
-		console.error("Error fetching favorite articles:", error);
+		console.error("Error fetching bookmarked articles:", error);
 		return NextResponse.json(
 			{ error: "Internal Server Error" },
 			{ status: 500 }
