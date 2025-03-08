@@ -170,7 +170,7 @@ export default function AuthClient() {
 							</p>
 							<Link
 								href="/terms"
-								className="text-secondary dark:text-secondary-foreground hover:underline font-medium">
+								className="text-blue-500 dark:text-secondary-foreground hover:underline font-medium">
 								Terms & Conditions
 							</Link>
 						</div>
