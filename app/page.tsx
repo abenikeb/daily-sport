@@ -434,9 +434,7 @@ export default function HomePage() {
 
 															{/* {JSON.stringify(article.content)} */}
 															{truncateText(
-																getLocalizedContent(
-																	(article as any).content["en"]
-																),
+																getLocalizedContent((article as any).content),
 																MAX_DESCRIPTION_LENGTH
 															)}
 															{/* {truncateText(
@@ -555,9 +553,7 @@ export default function HomePage() {
 														</h3>
 														<p className="text-gray-600 text-sm mb-3 line-clamp-2">
 															{truncateText(
-																getLocalizedContent(
-																	(article as any).content["en"]
-																),
+																getLocalizedContent((article as any).content),
 																MAX_DESCRIPTION_LENGTH
 															)}
 														</p>
