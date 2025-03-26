@@ -430,21 +430,12 @@ export default function HomePage() {
 															)}
 														</h3>
 														<p className="text-gray-600 text-sm mb-4 line-clamp-2">
-															{/* {JSON.stringify(
-																getLocalizedContent(
-																	(article as any).content["en"]
-																)
-															)} */}
-
-															{/* {JSON.stringify(article.content)} */}
+													
 															{truncateText(
-																getLocalizedContent((article as any).content),
+																getLocalizedContent((article as any).content['en']),
 																MAX_DESCRIPTION_LENGTH
 															)}
-															{/* {truncateText(
-																getLocalizedContent(article.content),
-																MAX_DESCRIPTION_LENGTH
-															)} */}
+															
 														</p>
 														<div className="mt-auto flex justify-between items-center text-xs text-gray-500">
 															<div className="flex items-center">
@@ -561,7 +552,7 @@ export default function HomePage() {
 														</h3>
 														<p className="text-gray-600 text-sm mb-3 line-clamp-2">
 															{truncateText(
-																getLocalizedContent((article as any).content),
+																getLocalizedContent((article as any).content['en']),
 																MAX_DESCRIPTION_LENGTH
 															)}
 														</p>
