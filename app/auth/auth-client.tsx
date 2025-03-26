@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LoginForm } from "@/components/LoginForm";
+import { SignloginSchema } from "@components/SIgnLoginForm";
 import {
 	LogIn,
 	UserPlus,
@@ -62,7 +63,7 @@ export default function AuthClient() {
 			</div>
 
 			{/* Header */}
-			<header className="relative z-10 py-6 px-4 sm:px-6 lg:px-8">
+			{/* <header className="relative z-10 py-6 px-4 sm:px-6 lg:px-8">
 				<div className="container mx-auto flex flex-col md:flex-row items-center justify-between">
 					<motion.div
 						initial={{ x: -20, opacity: 0 }}
@@ -98,7 +99,7 @@ export default function AuthClient() {
 						</div>
 					</motion.div>
 				</div>
-			</header>
+			</header> */}
 
 			<main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative z-10">
 				<motion.div
@@ -148,7 +149,7 @@ export default function AuthClient() {
 								{authMode === "login" ? (
 									<LoginForm redirectUrl={redirectUrl} />
 								) : (
-									<LoginForm redirectUrl={redirectUrl} />
+									<SignloginSchema />
 									// <SignupForm onSuccess={() => setAuthMode("login")} />
 								)}
 							</motion.div>
