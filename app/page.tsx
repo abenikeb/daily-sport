@@ -410,7 +410,9 @@ export default function HomePage() {
 																article.featuredImage ||
 																"/assets/images/fb1.png"
 															}
-															alt={getLocalizedContent(article.title)}
+															alt={getLocalizedContent(
+																(article as any).title["en"]
+															)}
 															layout="fill"
 															objectFit="cover"
 															className="group-hover:scale-105 transition-transform duration-300"
@@ -423,7 +425,9 @@ export default function HomePage() {
 													</div>
 													<div className="p-4 flex-grow flex flex-col">
 														<h3 className="font-bold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-															{getLocalizedContent(article.title)}
+															{getLocalizedContent(
+																(article as any).title["en"]
+															)}
 														</h3>
 														<p className="text-gray-600 text-sm mb-4 line-clamp-2">
 															{/* {JSON.stringify(
@@ -532,7 +536,9 @@ export default function HomePage() {
 																article.featuredImage ||
 																"/assets/images/fb1.png"
 															}
-															alt={getLocalizedContent(article.title)}
+															alt={getLocalizedContent(
+																(article as any).title["en"]
+															)}
 															layout="fill"
 															objectFit="cover"
 														/>
@@ -549,7 +555,9 @@ export default function HomePage() {
 															</div>
 														</div>
 														<h3 className="font-bold text-gray-800 mb-2 line-clamp-2 hover:text-primary transition-colors">
-															{getLocalizedContent(article.title)}
+															{getLocalizedContent(
+																(article as any).title["en"]
+															)}
 														</h3>
 														<p className="text-gray-600 text-sm mb-3 line-clamp-2">
 															{truncateText(
@@ -839,7 +847,7 @@ export default function HomePage() {
 // 													src={
 // 														article.featuredImage || "/assets/images/fb1.png"
 // 													}
-// 													alt={getLocalizedContent(article.title)}
+// 													alt={getLocalizedContent((article as any).title["en"])}
 // 													layout="fill"
 // 													objectFit="cover"
 // 												/>
