@@ -1,179 +1,3 @@
-// "use client";
-
-// import { useState } from "react";
-// import { useForm } from "react-hook-form";
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import { z } from "zod";
-// import { loginUser } from "@/app/actions/userAuth";
-// import { Button } from "@/components/ui/button";
-// import { useRouter, useSearchParams } from "next/navigation";
-// import {
-// 	Form,
-// 	FormControl,
-// 	FormField,
-// 	FormItem,
-// 	FormLabel,
-// 	FormMessage,
-// } from "@/components/ui/form";
-// import { Input } from "@/components/ui/input";
-// import { ErrorModal } from "@/components/error-modal";
-// import { LockKeyhole, Smartphone } from "lucide-react";
-
-// const loginSchema = z.object({
-// 	mobile: z
-// 		.string()
-// 		.min(10, "Phone number must be at least 10 characters")
-// 		.regex(
-// 			/^0[0-9]{9,}$/,
-// 			"Phone number must start with 0 followed by 9 or more digits"
-// 		),
-// 	password: z.string().min(1, "Password is required"),
-// });
-
-// type LoginSchema = z.infer<typeof loginSchema>;
-
-// export function LoginForm() {
-// 	const [showErrorModal, setShowErrorModal] = useState(false);
-// 	const router = useRouter();
-
-// 	const searchParams = useSearchParams();
-// 	const redirectUrl = searchParams?.get("redirect");
-// 	const [isLoading, setIsLoading] = useState(false);
-
-// 	const form = useForm<LoginSchema>({
-// 		resolver: zodResolver(loginSchema),
-// 		defaultValues: {
-// 			mobile: "",
-// 			password: "",
-// 		},
-// 	});
-
-// 	async function onSubmit(values: LoginSchema) {
-// 		const formData = new FormData();
-// 		Object.entries(values).forEach(([key, value]) =>
-// 			formData.append(key, value)
-// 		);
-
-// 		const result = await loginUser(formData);
-
-// 		if (result.success) {
-// 			if (redirectUrl) {
-// 				router.push(redirectUrl);
-// 			} else {
-// 				router.push("/profile");
-// 			}
-// 			router.refresh();
-
-// 			// window.location.href = result.redirectUrl;
-// 		} else {
-// 			setShowErrorModal(true);
-// 		}
-// 	}
-
-// 	return (
-// 		<>
-// 			<div className="bg-white rounded-xl shadow-2xl p-8 max-w-md mx-auto">
-// 				<div className="text-center mb-8">
-// 					<h2 className="text-2xl font-bold text-secondary">Welcome Back</h2>
-// 					<p className="text-gray-500 mt-2">Sign in to your account</p>
-// 				</div>
-
-// 				<Form {...form}>
-// 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-// 						<FormField
-// 							control={form.control}
-// 							name="mobile"
-// 							render={({ field }) => (
-// 								<FormItem>
-// 									<FormLabel className="text-secondary font-medium">
-// 										የሞባይል ቁጥርዎን ያስገቡ
-// 									</FormLabel>
-// 									<div className="relative">
-// 										<div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-// 											<Smartphone size={18} />
-// 										</div>
-// 										<FormControl>
-// 											<Input
-// 												placeholder="09........"
-// 												{...field}
-// 												className="pl-10 py-6 rounded-lg border-2 border-gray-200 focus:border-primary focus:ring-primary transition-all"
-// 											/>
-// 										</FormControl>
-// 									</div>
-// 									<FormMessage className="text-red-500" />
-// 								</FormItem>
-// 							)}
-// 						/>
-// 						<FormField
-// 							control={form.control}
-// 							name="password"
-// 							render={({ field }) => (
-// 								<FormItem>
-// 									<FormLabel className="text-secondary font-medium">
-// 										የይለፍ ሚስጥር ቁጥርዎን ያስገቡ
-// 									</FormLabel>
-// 									<div className="relative">
-// 										<div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-// 											<LockKeyhole size={18} />
-// 										</div>
-// 										<FormControl>
-// 											<Input
-// 												type="password"
-// 												placeholder="Password"
-// 												{...field}
-// 												className="pl-10 py-6 rounded-lg border-2 border-gray-200 focus:border-primary focus:ring-primary transition-all"
-// 											/>
-// 										</FormControl>
-// 									</div>
-// 									<FormMessage className="text-red-500" />
-// 								</FormItem>
-// 							)}
-// 						/>
-// 						<div className="pt-2">
-// 							<Button
-// 								type="submit"
-// 								className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 text-lg">
-// 								ግባ / Login
-// 							</Button>
-// 						</div>
-
-// 						<div className="text-center mt-4">
-// 							<p className="text-sm text-gray-500">
-// 								Don't have an account?{" "}
-// 								<a
-// 									href="sms:8436;?&body=Ok"
-// 									className="text-primary font-semibold hover:underline">
-// 									Register Now
-// 								</a>
-// 							</p>
-// 						</div>
-// 					</form>
-// 				</Form>
-// 			</div>
-
-// 			<div className="mt-6 bg-white/80 rounded-lg p-4 max-w-md mx-auto">
-// 				<div className="text-xs text-gray-600 space-y-1">
-// 					<p>FIRST 3 DAYS FOR FREE, THEN 2 BIRR/DAY</p>
-// 					<p>To unsubscribe, send STOP to 8436. For help call 0913229175</p>
-// 					<p>በመጀመሪያ 3 ቀናት በነጻ፣ ከዚያም በቀን 2 ብር</p>
-// 					<p>
-// 						አገልግሎቱን ለማቋረጥ ወደ 8436 Stop ብለዉ ይላኩ:: ለተጨማሪ መረጃ በ 0913229175 ያግኙን
-// 					</p>
-// 					<a
-// 						href="/terms"
-// 						className="text-secondary hover:underline font-medium">
-// 						Terms & Conditions
-// 					</a>
-// 				</div>
-// 			</div>
-
-// 			<ErrorModal
-// 				isOpen={showErrorModal}
-// 				onClose={() => setShowErrorModal(false)}
-// 			/>
-// 		</>
-// 	);
-// }
 
 "use client";
 
@@ -239,13 +63,22 @@ export function LoginForm({ redirectUrl }: LoginFormProps) {
 		setIsLoading(true);
 
 		try {
-			// Create FormData as in the original code
-			const formData = new FormData();
-			Object.entries(values).forEach(([key, value]) => {
-				if (typeof value !== "boolean") {
-					formData.append(key, value);
-				}
-			});
+			// Manipulate the phone number
+			const manipulatedPhone = manipulatePhoneNumber(values.mobile)
+
+			// Create FormData
+			const formData = new FormData()
+			formData.append("mobile", manipulatedPhone)
+			formData.append("password", values.password)
+			if (values.rememberMe !== undefined) {
+				formData.append("rememberMe", values.rememberMe.toString())
+			}
+
+			// Object.entries(values).forEach(([key, value]) => {
+			// 	if (typeof value !== "boolean") {
+			// 		formData.append(key, value);
+			// 	}
+			// });
 
 			// Call the loginUser function (assuming it's imported)
 			// For demo purposes, let's simulate a response
@@ -272,6 +105,14 @@ export function LoginForm({ redirectUrl }: LoginFormProps) {
 		} finally {
 			setIsLoading(false);
 		}
+	}
+
+	 // Function to manipulate phone number
+	function manipulatePhoneNumber(phone: string): string {
+		if (phone.startsWith("0") && phone.length >= 10) {
+		return "251" + phone.slice(1)
+		}
+		return phone
 	}
 
 	// Mock function for the demo

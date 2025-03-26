@@ -15,6 +15,13 @@ export async function GET(request: NextRequest) {
 		const phone = searchParams.get("phone");
 		const password = searchParams.get("password");
 
+		console.log({
+			message:"GET",
+			phone,
+			password
+		})
+
+
 		if (!phone || !password) {
 			return NextResponse.json(
 				{ error: "Phone number and password are required" },
@@ -26,6 +33,11 @@ export async function GET(request: NextRequest) {
 		let user = await prisma.user.findUnique({
 			where: { phone },
 		});
+
+		console.log({
+		    user,
+			status: user?.subscriptionStatus
+		})
 
 		// If user doesn't exist, create a new user (registration logic)
 		if (!user) {
@@ -96,13 +108,66 @@ export async function GET(request: NextRequest) {
 		}
 
 		// For existing users, validate password
-		const isPasswordValid = await bcrypt.compare(password, user.password);
+		// const isPasswordValid = await bcrypt.compare(password, user.password);
 
-		if (!isPasswordValid) {
-			return NextResponse.json(
-				{ error: "Invalid credentials" },
-				{ status: 401 }
-			);
+		// if (!isPasswordValid) {
+		// 	return NextResponse.json(
+		// 		{ error: "Invalid credentials" },
+		// 		{ status: 401 }
+		// 	);
+		// }
+
+		// Update subscription status to ACTIVE if it's not already
+		if (user && user.subscriptionStatus === "UNSUBSCRIBE") {
+			const currentDate = new Date()
+			const hashedPassword = await bcrypt.hash(password, 10);
+			const subscriptionEnd = new Date(currentDate)
+			subscriptionEnd.setDate(currentDate.getDate() + 3) // 3 days subscription
+
+			user = await prisma.user.update({
+				where: { phone },
+				data: {
+					subscriptionStatus: "ACTIVE",
+					password: hashedPassword,
+					subscriptionStart: currentDate,
+					subscriptionEnd: subscriptionEnd,
+				},
+			})
+
+			console.log({
+				subscritionUser: user
+			})
+			
+			const token = await new SignJWT({
+				userId: user.id,
+				phone: user.phone,
+				role: user.role,
+			})
+				.setProtectedHeader({ alg: "HS256" })
+				.setJti(nanoid())
+				.setIssuedAt()
+				.setExpirationTime("2h")
+				.sign(new TextEncoder().encode(process.env.JWT_SECRET));
+
+			cookies().set("token", token, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === "production",
+			});
+			// Return existing user info
+			const subscriberInfo = {
+				id: user.id,
+				phone: user.phone,
+				name: user.name,
+				role: user.role,
+				subscriptionStatus: user.subscriptionStatus,
+				subscriptionStart: user.subscriptionStart,
+				subscriptionEnd: user.subscriptionEnd,
+			};
+
+			return NextResponse.json({
+				subscriber: subscriberInfo,
+				isNewUser: false,
+			});
 		}
 
 		// Return existing user info
@@ -133,85 +198,100 @@ export async function GET(request: NextRequest) {
 
 // Add a POST method to handle form submissions if needed
 export async function POST(request: NextRequest) {
-	try {
-		const body = await request.json();
-		const { phone, password } = body;
+  try {
+    const body = await request.json()
+    const { phone, password } = body
 
-		if (!phone || !password) {
-			return NextResponse.json(
-				{ error: "Phone number and password are required" },
-				{ status: 400 }
-			);
-		}
+    console.log({
+      message: "POST",
+      phone,
+      password,
+    })
 
-		// Same logic as GET but for POST requests
-		let user = await prisma.user.findUnique({
-			where: { phone },
-		});
+    if (!phone || !password) {
+      return NextResponse.json({ error: "Phone number and password are required" }, { status: 400 })
+    }
 
-		if (!user) {
-			const hashedPassword = await bcrypt.hash(password, 10);
+    let user = await prisma.user.findUnique({
+      where: { phone },
+    })
 
-			const currentDate = new Date();
-			const subscriptionEnd = new Date(currentDate);
-			subscriptionEnd.setDate(currentDate.getDate() + 3);
+    if (!user) {
+      const hashedPassword = await bcrypt.hash(password, 10)
+      const currentDate = new Date()
+      const subscriptionEnd = new Date(currentDate)
+      subscriptionEnd.setDate(currentDate.getDate() + 3)
 
-			user = await prisma.user.create({
-				data: {
-					phone,
-					password: hashedPassword,
-					name: `User-${phone.substring(phone.length - 4)}`,
-					role: "USER",
-					subscriptionStatus: "ACTIVE",
-					subscriptionStart: currentDate,
-					subscriptionEnd: subscriptionEnd,
-				},
-			});
+      user = await prisma.user.create({
+        data: {
+          phone,
+          password: hashedPassword,
+          name: `User-${phone.substring(phone.length - 4)}`,
+          role: "USER",
+          subscriptionStatus: "ACTIVE",
+          subscriptionStart: currentDate,
+          subscriptionEnd: subscriptionEnd,
+        },
+      })
 
-			const token = await new SignJWT({
-				userId: user.id,
-				phone: user.phone,
-				role: user.role,
-			})
-				.setProtectedHeader({ alg: "HS256" })
-				.setJti(nanoid())
-				.setIssuedAt()
-				.setExpirationTime("2h")
-				.sign(new TextEncoder().encode(process.env.JWT_SECRET));
+      const token = await new SignJWT({
+        userId: user.id,
+        phone: user.phone,
+        role: user.role,
+      })
+        .setProtectedHeader({ alg: "HS256" })
+        .setJti(nanoid())
+        .setIssuedAt()
+        .setExpirationTime("2h")
+        .sign(new TextEncoder().encode(process.env.JWT_SECRET))
 
-			cookies().set("token", token, {
-				httpOnly: true,
-				secure: process.env.NODE_ENV === "production",
-			});
+      cookies().set("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      })
 
-			return NextResponse.json({
-				message: "Subscriber registered successfully",
-				subscriber: {
-					id: user.id,
-					phone: user.phone,
-					subscriptionStatus: user.subscriptionStatus,
-				},
-				isNewUser: true,
-			});
-		}
+      return NextResponse.json({
+        message: "Subscriber registered successfully",
+        subscriber: {
+          id: user.id,
+          phone: user.phone,
+          subscriptionStatus: user.subscriptionStatus,
+        },
+        isNewUser: true,
+      })
+    }
 
-		// For existing users, just return success
-		return NextResponse.json({
-			message: "Subscriber already exists",
-			subscriber: {
-				id: user.id,
-				phone: user.phone,
-				subscriptionStatus: user.subscriptionStatus,
-			},
-			isNewUser: false,
-		});
-	} catch (error) {
-		console.error("Error processing subscriber request:", error);
-		return NextResponse.json(
-			{ error: "Failed to process subscriber information" },
-			{ status: 500 }
-		);
-	} finally {
-		await prisma.$disconnect();
-	}
+    // Update subscription status to ACTIVE if it's not already
+    if (user.subscriptionStatus !== "ACTIVE") {
+      const currentDate = new Date()
+      const subscriptionEnd = new Date(currentDate)
+      subscriptionEnd.setDate(currentDate.getDate() + 3)
+
+      user = await prisma.user.update({
+        where: { phone },
+        data: {
+          subscriptionStatus: "ACTIVE",
+          subscriptionStart: currentDate,
+          subscriptionEnd: subscriptionEnd,
+        },
+      })
+    }
+
+    return NextResponse.json({
+      message: "Subscriber already exists",
+      subscriber: {
+        id: user.id,
+        phone: user.phone,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionStart: user.subscriptionStart,
+        subscriptionEnd: user.subscriptionEnd,
+      },
+      isNewUser: false,
+    })
+  } catch (error) {
+    console.error("Error processing subscriber request:", error)
+    return NextResponse.json({ error: "Failed to process subscriber information" }, { status: 500 })
+  } finally {
+    await prisma.$disconnect()
+  }
 }

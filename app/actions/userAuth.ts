@@ -103,10 +103,28 @@ export async function loginUser(formData: FormData): Promise<LoginResult> {
 	}
 
 	try {
-		const user = await prisma.user.findUnique({ where: { phone: mobile } });
+		// const user = await prisma.user.findUnique({ where: { phone: mobile } });
+		// console.log({
+		// 	user,
+		// });
+		 // Find user and include subscription information
+		const user = await prisma.user.findUnique({
+		where: { phone: mobile },
+		select: {
+			id: true,
+			phone: true,
+			password: true,
+			role: true,
+			subscriptionStatus: true,
+			subscriptionEnd: true,
+		},
+		})
+
 		console.log({
-			user,
-		});
+		  message:"LoginUser",
+		  user,
+		})
+
 
 		if (!user) {
 			// return { error: "Invalid credentials" };
@@ -126,6 +144,30 @@ export async function loginUser(formData: FormData): Promise<LoginResult> {
 				error: "Invalid credentials",
 			};
 		}
+
+		 // Check subscription status
+		if (user.subscriptionStatus !== "ACTIVE") {
+			return {
+				success: false,
+				error: "Your subscription is not active. Please renew your subscription to continue.",
+			}
+		}
+
+		// Check if subscription has expired
+		// if (user.subscriptionEnd && new Date(user.subscriptionEnd) < new Date()) {
+		// // Update user subscription status to INACTIVE
+		// await prisma.user.update({
+		// 	where: { id: user.id },
+		// 	data: {
+		// 	subscriptionStatus: "INACTIVE",
+		// 	},
+		// })
+
+		// return {
+		// 	success: false,
+		// 	error: "Your subscription has expired. Please renew your subscription to continue.",
+		// }
+		// }
 
 		const token = await new SignJWT({
 			userId: user.id,

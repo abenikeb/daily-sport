@@ -78,7 +78,7 @@ model Tag {
 
 model Article {
   id            String        @id @default(uuid())
-  title         String
+  title         Json
   content       Json // Stores multilingual content
   authorId      String
   author        User          @relation(fields: [authorId], references: [id])

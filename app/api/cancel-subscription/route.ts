@@ -4,7 +4,11 @@ import prisma from "@/lib/prisma";
 export async function GET(request: NextRequest) {
 	try {
 		const { searchParams } = new URL(request.url);
-		const phone = searchParams.get("phone");
+		const phone = searchParams.get("stop");
+
+		console.log({
+			phone
+		})
 
 		if (!phone) {
 			return NextResponse.json(
@@ -12,6 +16,10 @@ export async function GET(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
+
+		console.log({
+			phone
+		})
 
 		const user = await prisma.user.findUnique({
 			where: { phone },
@@ -23,6 +31,10 @@ export async function GET(request: NextRequest) {
 				{ status: 404 }
 			);
 		}
+
+			console.log({
+			user
+		})
 
 		// Update the subscriber's subscription status to UNSUBSCRIBE
 		// Keep the subscription dates for record purposes
@@ -48,6 +60,10 @@ export async function GET(request: NextRequest) {
 				contractNo: true,
 			},
 		});
+
+		console.log({
+			updatedSubscriber
+		})
 
 		return NextResponse.json({
 			message: "Subscription cancelled successfully",
