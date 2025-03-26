@@ -102,7 +102,7 @@ function LogoutButton() {
 						size="icon"
 						className="relative group"
 						asChild>
-						<Link href="/api/auth/signout">
+						<Link href="/api/auth/logout">
 							<div className="relative">
 								<div className="absolute inset-0 bg-red-100 scale-0 rounded-full transition-transform duration-200 group-hover:scale-100"></div>
 								<LogOut className="w-6 h-6 text-red-500 transition-colors duration-200" />
