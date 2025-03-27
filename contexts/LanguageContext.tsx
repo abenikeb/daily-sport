@@ -214,6 +214,7 @@ const translations: Record<Language, Record<string, string>> = {
 		bookmark: "Bookmark",
 		bookmarked: "Bookmarked",
 		shareArticle: "Share Article",
+		noArticlesFoundTitle: "No Articles Found",
 		shareArticleDescription:
 			"Share this article with your friends and colleagues",
 		copyLink: "Copy Link",
@@ -315,6 +316,7 @@ const translations: Record<Language, Record<string, string>> = {
 		fullName: "ሙሉ ስም",
 		email: "ኢሜይል",
 		password: "የይለፍ ቃል",
+		noArticlesFoundTitle: "መጽሐፍት አልተገኙም",
 		confirmPassword: "የይለፍ ቃል ያረጋግጡ",
 		login: "ግባ",
 		register: "ይመዝገቡ",
@@ -548,6 +550,7 @@ const translations: Record<Language, Record<string, string>> = {
 		menu: "Menu",
 		becomeAWriter: "Barreessaa Ta'uu",
 		aboutUs: "Waa'ee Keenya",
+		noArticlesFoundTitle: "No Articles Found",
 		aboutUsShort:
 			"Daily Sport madda oduu fi odeeffannoo ispoortii haaraa argattanidha.",
 		contactUs: "Nu Quunnamaa",

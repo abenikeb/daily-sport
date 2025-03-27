@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import Provider from "@/components/Provider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
-import { LogIn, LogOut, Search, User } from "lucide-react";
+import { LogIn, LogOut, Search, User, User2, User2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "@node_modules/next/image";
 import { SidebarDrawer } from "@components/SidebarDrawer";
@@ -75,10 +75,8 @@ async function UserButton() {
 						<Link href={user ? "/profile" : "/profile"}>
 							<div className="relative">
 								<div className="absolute inset-0 bg-primary/10 scale-0 rounded-full transition-transform duration-200 group-hover:scale-100"></div>
-								{!user ? (
-									<User className="w-6 h-6 text-primary transition-colors duration-200" />
-								) : (
-									<LogIn className="w-6 h-6 text-primary transition-colors duration-200" />
+								{!user && (
+									<User2Icon className="w-6 h-6 text-primary transition-colors duration-200" />
 								)}
 							</div>
 						</Link>

@@ -49,6 +49,7 @@ interface Article {
 		name: string;
 	};
 	viewCount: number;
+	uniqueViewCount?: number;
 }
 
 const ARTICLES_PER_PAGE = 10;
@@ -143,22 +144,8 @@ export default function HomePage() {
 				}
 				const data = await res.json();
 
-				if (page === 1) {
-					// Replace articles when changing category or first load
-					setArticles(data.articles);
-
-					// Set featured articles (first 3 articles or fewer if less available)
-					if (data.articles.length > 0) {
-						setFeaturedArticles(
-							data.articles.slice(0, Math.min(3, data.articles.length))
-						);
-					} else {
-						setFeaturedArticles([]);
-					}
-				} else {
-					// Append articles for pagination
-					setArticles((prevArticles) => [...prevArticles, ...data.articles]);
-				}
+				// Fetch view counts for articles
+				await fetchArticleViewCounts(data.articles);
 
 				setHasMore(data.hasMore);
 				setError(null);
@@ -172,6 +159,56 @@ export default function HomePage() {
 		}
 		fetchArticles();
 	}, [page, selectedCategory, searchQuery]);
+
+	// Add this function after the fetchArticles function in the useEffect
+	async function fetchArticleViewCounts(articlesData: Article[]) {
+		try {
+			const viewCountPromises = articlesData.map(async (article) => {
+				const response = await fetch(
+					`/api/articles/view?articleId=${article.id}`,
+					{
+						method: "GET",
+					}
+				);
+
+				console.log({
+					response,
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					return {
+						...article,
+						viewCount: data.viewCount || 0,
+						uniqueViewCount: data.uniqueViewCount || 0,
+					};
+				}
+				return article;
+			});
+
+			const articlesWithViewCounts = await Promise.all(viewCountPromises);
+
+			if (page === 1) {
+				setArticles(articlesWithViewCounts);
+
+				// Update featured articles with view counts
+				if (articlesWithViewCounts.length > 0) {
+					setFeaturedArticles(
+						articlesWithViewCounts.slice(
+							0,
+							Math.min(3, articlesWithViewCounts.length)
+						)
+					);
+				} else {
+					setFeaturedArticles([]);
+				}
+			} else {
+				setArticles((prev) => [...prev, ...articlesWithViewCounts]);
+			}
+		} catch (error) {
+			console.error("Error fetching view counts:", error);
+		}
+	}
 
 	const getLocalizedContent = (content: LocalizedContent) => {
 		console.log({
@@ -408,11 +445,10 @@ export default function HomePage() {
 														<Image
 															src={
 																article.featuredImage ||
-																"/assets/images/fb1.png"
+																"/assets/images/fb1.png" ||
+																"/placeholder.svg"
 															}
-															alt={getLocalizedContent(
-																(article as any).title["en"]
-															)}
+															alt={getLocalizedContent((article as any).title)}
 															layout="fill"
 															objectFit="cover"
 															className="group-hover:scale-105 transition-transform duration-300"
@@ -425,17 +461,13 @@ export default function HomePage() {
 													</div>
 													<div className="p-4 flex-grow flex flex-col">
 														<h3 className="font-bold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-															{getLocalizedContent(
-																(article as any).title["en"]
-															)}
+															{getLocalizedContent(article.title)}
 														</h3>
 														<p className="text-gray-600 text-sm mb-4 line-clamp-2">
-													
 															{truncateText(
-																getLocalizedContent((article as any).content['en']),
+																getLocalizedContent(article.content),
 																MAX_DESCRIPTION_LENGTH
 															)}
-															
 														</p>
 														<div className="mt-auto flex justify-between items-center text-xs text-gray-500">
 															<div className="flex items-center">
@@ -444,7 +476,7 @@ export default function HomePage() {
 															</div>
 															<div className="flex items-center">
 																<Eye className="w-3 h-3 mr-1" />
-																<span>{article.viewCount}</span>
+																<span>{article.viewCount || 0}</span>
 															</div>
 														</div>
 													</div>
@@ -525,11 +557,10 @@ export default function HomePage() {
 														<Image
 															src={
 																article.featuredImage ||
-																"/assets/images/fb1.png"
+																"/assets/images/fb1.png" ||
+																"/placeholder.svg"
 															}
-															alt={getLocalizedContent(
-																(article as any).title["en"]
-															)}
+															alt={getLocalizedContent((article as any).title)}
 															layout="fill"
 															objectFit="cover"
 														/>
@@ -542,17 +573,15 @@ export default function HomePage() {
 															</Badge>
 															<div className="flex items-center text-gray-400 text-xs">
 																<Eye className="w-3 h-3 mr-1" />
-																<span>{article.viewCount}</span>
+																<span>{article.viewCount || 0}</span>
 															</div>
 														</div>
 														<h3 className="font-bold text-gray-800 mb-2 line-clamp-2 hover:text-primary transition-colors">
-															{getLocalizedContent(
-																(article as any).title["en"]
-															)}
+															{getLocalizedContent((article as any).title)}
 														</h3>
 														<p className="text-gray-600 text-sm mb-3 line-clamp-2">
 															{truncateText(
-																getLocalizedContent((article as any).content['en']),
+																getLocalizedContent(article.content),
 																MAX_DESCRIPTION_LENGTH
 															)}
 														</p>

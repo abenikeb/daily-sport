@@ -35,6 +35,8 @@ model User {
   contractNo        String?
 
   Bookmark Bookmark[]
+
+  ArticleView ArticleView[]
 }
 
 enum SubscriptionStatus {
@@ -97,8 +99,27 @@ model Article {
   favoritedBy FavoriteArticle[]
 
   Bookmark Bookmark[]
+
+  ArticleView ArticleView[]
 }
 
+
+
+model ArticleView {
+  id        String   @id @default(cuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  
+  // Unique constraint to prevent duplicate views from the same user
+  @@unique([userId, articleId])
+  @@index([userId])
+  @@index([articleId])
+}
 
 enum ArticleStatus {
   PENDING

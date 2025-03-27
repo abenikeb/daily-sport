@@ -207,13 +207,13 @@ export default function CategoryPage({ params }: { params: { name: string } }) {
 										<div className="flex-grow">
 											<h4 className="font-bold mb-1 text-gray-800">
 												{truncateText(
-													getLocalizedContent((article as any).title["en"]),
+													getLocalizedContent(article.title),
 													MAX_DESCRIPTION_LENGTH
 												)}
 											</h4>
 											<p className="text-sm text-gray-600">
 												{truncateText(
-													getLocalizedContent((article as any).content["en"]),
+													getLocalizedContent(article.content),
 													MAX_DESCRIPTION_LENGTH
 												)}
 											</p>

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export async function POST() {
+export async function GET() {
 	cookies().delete("token");
+	redirect("/");
 	return NextResponse.json({ success: true });
 }
