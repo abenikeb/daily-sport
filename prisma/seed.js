@@ -26,15 +26,15 @@ async function main() {
 		},
 	});
 
-	await prisma.user.create({
-		data: {
-			email: "abneikeb79@gmail.com",
-			phone: "251913228892",
-			password: hashedPassword,
-			name: "Abenezer Kebede",
-			role: "USER",
-		},
-	});
+	// await prisma.user.create({
+	// 	data: {
+	// 		email: "abneikeb79@gmail.com",
+	// 		phone: "251913228892",
+	// 		password: hashedPassword,
+	// 		name: "Abenezer Kebede",
+	// 		role: "USER",
+	// 	},
+	// });
 
 	// Create Categories
 	const national = await prisma.category.create({

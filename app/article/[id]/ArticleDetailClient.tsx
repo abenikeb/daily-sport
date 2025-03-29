@@ -99,7 +99,7 @@ export default function ArticleDetailClient({
 	isAuthenticated,
 	articleId,
 	userId,
-}: ArticleDetailClientProps) {
+}: ArticleDetailClientProps | any) {
 	const { t, language } = useLanguage();
 	const router = useRouter();
 	const { toast } = useToast();
@@ -411,7 +411,7 @@ export default function ArticleDetailClient({
 			if (response.ok) {
 				const newIsLiked = !isLiked;
 				setIsLiked(newIsLiked);
-				setLikeCount((prev) => (newIsLiked ? prev + 1 : prev - 1));
+				setLikeCount((prev:any) => (newIsLiked ? prev + 1 : prev - 1));
 
 				toast({
 					title: newIsLiked ? t("articleLiked") : t("articleUnliked"),
@@ -976,7 +976,7 @@ export default function ArticleDetailClient({
 								<h3 className="font-medium mb-2">{t("tags")}</h3>
 								<div className="flex flex-wrap gap-2">
 									{article.tags && article.tags.length > 0 ? (
-										article.tags.map((tag) => (
+										article.tags.map((tag:any) => (
 											<Badge
 												key={tag.id}
 												variant="outline"

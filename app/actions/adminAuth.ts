@@ -42,8 +42,9 @@ export async function signupAdmin(formData: FormData) {
 			.sign(new TextEncoder().encode(process.env.JWT_SECRET));
 
 		cookies().set("token", token, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
+			httpOnly: false,
+			// secure: process.env.NODE_ENV === "production",
+			secure: false,
 		});
 
 		return { success: "Admin account created successfully" };
@@ -84,8 +85,9 @@ export async function loginAdmin(formData: FormData) {
 			.sign(new TextEncoder().encode(process.env.JWT_SECRET));
 
 		cookies().set("token", token, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
+			httpOnly: false,
+			// 
+			secure: false,
 		});
 
 		return { success: "Logged in successfully" };

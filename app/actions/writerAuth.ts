@@ -43,7 +43,8 @@ export async function signupWriter(formData: FormData) {
 
 		cookies().set("token", token, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
+			secure: false,
+			maxAge: 60 * 60 * 24, // 1 day
 		});
 
 		return { success: "Writer account created successfully" };
@@ -83,9 +84,12 @@ export async function loginWriter(formData: FormData) {
 			.setExpirationTime("2h")
 			.sign(new TextEncoder().encode(process.env.JWT_SECRET));
 
+			
+
 		cookies().set("token", token, {
 			httpOnly: true,
 			secure: false,
+			maxAge: 60 * 60 * 24, // 1 day
 		});
 		// cookies().set("token", token, {
 		// 	httpOnly: true,

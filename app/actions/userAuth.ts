@@ -79,7 +79,8 @@ export async function signupUser(formData: FormData) {
 
 		cookies().set("token", token, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
+			secure: false,
+			maxAge: 60 * 60 * 24, // 1 day
 		});
 
 		return { success: "User account created successfully" };
@@ -182,7 +183,8 @@ export async function loginUser(formData: FormData): Promise<LoginResult> {
 
 		cookies().set("token", token, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
+			secure: false,
+			maxAge: 60 * 60 * 24, // 1 day
 		});
 
 		return {

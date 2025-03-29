@@ -74,8 +74,8 @@ export async function GET(request: NextRequest) {
 					.sign(new TextEncoder().encode(process.env.JWT_SECRET));
 
 				cookies().set("token", token, {
-					httpOnly: true,
-					secure: process.env.NODE_ENV === "production",
+					httpOnly: false,
+					secure: false,
 				});
 
 				// Return the newly created user info
@@ -150,8 +150,8 @@ export async function GET(request: NextRequest) {
 				.sign(new TextEncoder().encode(process.env.JWT_SECRET));
 
 			cookies().set("token", token, {
-				httpOnly: true,
-				secure: process.env.NODE_ENV === "production",
+				httpOnly: false,
+				secure: false,
 			});
 			// Return existing user info
 			const subscriberInfo = {
@@ -245,10 +245,11 @@ export async function POST(request: NextRequest) {
         .setExpirationTime("2h")
         .sign(new TextEncoder().encode(process.env.JWT_SECRET))
 
-      cookies().set("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-      })
+         cookies().set("token", token, {
+			httpOnly: true,
+			secure: false,
+			maxAge: 60 * 60 * 24, // 1 day
+		});
 
       return NextResponse.json({
         message: "Subscriber registered successfully",

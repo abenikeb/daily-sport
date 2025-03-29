@@ -77,7 +77,6 @@ model Tag {
 }
 
 
-
 model Article {
   id            String        @id @default(uuid())
   title         Json

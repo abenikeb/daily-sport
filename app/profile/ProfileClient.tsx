@@ -136,7 +136,7 @@ export default function ProfileClient({ user }: ProfileClientProps | any) {
 		try {
 			setIsLoading(true);
 			await fetch("/api/auth/logout", {
-				method: "GET",
+				method: "POST",
 			});
 			router.push("/");
 			router.refresh();
