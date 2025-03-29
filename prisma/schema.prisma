@@ -124,6 +124,7 @@ enum ArticleStatus {
   PENDING
   APPROVED
   REJECTED
+  DISABLED
 }
 
 model FavoriteArticle {

@@ -193,15 +193,40 @@ export default function HomePage() {
 
 				// Update featured articles with view counts
 				if (articlesWithViewCounts.length > 0) {
-					setFeaturedArticles(
-						articlesWithViewCounts.slice(
-							0,
-							Math.min(3, articlesWithViewCounts.length)
-						)
+					// Sort articles by viewCount in descending order
+					const sortedArticles = [...articlesWithViewCounts].sort(
+						(a: Article, b: Article) => {
+							// Ensure viewCount exists and is a number for comparison
+							const viewCountA =
+								typeof a.viewCount === "number" ? a.viewCount : -Infinity;
+							const viewCountB =
+								typeof b.viewCount === "number" ? b.viewCount : -Infinity;
+							return viewCountB - viewCountA;
+						}
 					);
+
+					// Take the first article from the sorted list (highest viewCount)
+					const highestViewCountArticle = sortedArticles[0];
+
+					// Set featured articles to an array containing only the highest view count article
+					if (highestViewCountArticle) {
+						setFeaturedArticles([highestViewCountArticle]);
+					} else {
+						setFeaturedArticles([]);
+					}
 				} else {
 					setFeaturedArticles([]);
 				}
+				// if (articlesWithViewCounts.length > 0) {
+				// 	setFeaturedArticles(
+				// 		articlesWithViewCounts.slice(
+				// 			0,
+				// 			Math.min(3, articlesWithViewCounts.length)
+				// 		)
+				// 	);
+				// } else {
+				// 	setFeaturedArticles([]);
+				// }
 			} else {
 				setArticles((prev) => [...prev, ...articlesWithViewCounts]);
 			}
