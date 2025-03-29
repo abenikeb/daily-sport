@@ -99,7 +99,7 @@ export default function ArticleDetailClient({
 	isAuthenticated,
 	articleId,
 	userId,
-}: ArticleDetailClientProps) {
+}: ArticleDetailClientProps | any) {
 	const { t, language } = useLanguage();
 	const router = useRouter();
 	const { toast } = useToast();

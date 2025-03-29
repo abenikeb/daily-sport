@@ -25,7 +25,6 @@ import {
 	LogOut,
 	Pencil,
 	Trash2,
-	Upload,
 	X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -54,6 +53,7 @@ import {
 	DialogFooter,
 } from "@/components/ui/dialog";
 import Image from "next/image";
+import { CloudinaryUploader } from "@/components/cloudinary-uploader";
 
 const languages = ["en", "am", "om"];
 
@@ -74,7 +74,7 @@ interface Article {
 		am?: string;
 		om?: string;
 	};
-	status: "PENDING" | "APPROVED" | "REJECTED";
+	status: "PENDING" | "APPROVED" | "REJECTED" | "DISABLED";
 	createdAt: string;
 	tags: any;
 	categoryId: string;
@@ -113,6 +113,7 @@ export default function WriterDashboardClient({
 		null
 	);
 	const [activeTab, setActiveTab] = useState("newArticle");
+	const [imagePreview, setImagePreview] = useState<string | null>(null);
 
 	const [formData, setFormData] = useState({
 		title: { en: "", am: "", om: "" },
@@ -132,6 +133,16 @@ export default function WriterDashboardClient({
 		}
 	}, [editingArticle]);
 
+	// In the useEffect hook or initial data loading, ensure we're filtering out DISABLED articles
+	useEffect(() => {
+		// If articles are loaded from props, filter out DISABLED ones
+		if (initialArticles) {
+			setArticles(
+				initialArticles.filter((article: any) => article.status !== "DISABLED")
+			);
+		}
+	}, [initialArticles]);
+
 	const fetchSubcategories = async (categoryId: string) => {
 		try {
 			const res = await fetch(`/api/subcategories?categoryId=${categoryId}`);
@@ -147,7 +158,15 @@ export default function WriterDashboardClient({
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files[0]) {
-			setFormData((prev) => ({ ...prev, featuredImage: e.target.files![0] }));
+			const file = e.target.files[0];
+			setFormData((prev) => ({ ...prev, featuredImage: file }));
+
+			// Create a preview URL for the selected image
+			const reader = new FileReader();
+			reader.onloadend = () => {
+				setImagePreview(reader.result as string);
+			};
+			reader.readAsDataURL(file);
 		}
 	};
 
@@ -184,6 +203,7 @@ export default function WriterDashboardClient({
 		});
 		setIsEditMode(false);
 		setEditingArticle(null);
+		setImagePreview(null);
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
 		}
@@ -200,6 +220,12 @@ export default function WriterDashboardClient({
 			formDataToSend.append("tags", formData.tags);
 			formDataToSend.append("authorId", user.id);
 
+			// If we have an image URL from Cloudinary, send it directly
+			if (imagePreview) {
+				formDataToSend.append("featuredImageUrl", imagePreview);
+			}
+
+			// Only append the file if we're using the old method and have a file
 			if (formData.featuredImage) {
 				formDataToSend.append("featuredImage", formData.featuredImage);
 			}
@@ -302,6 +328,13 @@ export default function WriterDashboardClient({
 			featuredImage: null,
 		});
 
+		// Set image preview if article has a featured image
+		if (article.featuredImage) {
+			setImagePreview(article.featuredImage);
+		} else {
+			setImagePreview(null);
+		}
+
 		// Load subcategories for the selected category
 		if (article.categoryId) {
 			await fetchSubcategories(article.categoryId);
@@ -317,9 +350,12 @@ export default function WriterDashboardClient({
 				if (!res.ok) {
 					throw new Error("Failed to delete article");
 				}
+
+				// Update the articles state to remove the deleted/disabled article
 				setArticles(
 					articles.filter((article: any) => article.id !== articleId)
 				);
+
 				toast({
 					title: t("articleDeleted"),
 					description: t("articleDeletedDescription"),
@@ -353,6 +389,17 @@ export default function WriterDashboardClient({
 
 	const cancelEdit = () => {
 		resetForm();
+	};
+
+	// Helper function to get optimized Cloudinary URLs
+	const getOptimizedImageUrl = (url: string, width = 800, height = 600) => {
+		if (!url || !url.includes("cloudinary.com")) return url;
+
+		// For Cloudinary URLs, we can add transformations
+		return url.replace(
+			"/upload/",
+			`/upload/c_fill,w_${width},h_${height},q_auto,f_auto/`
+		);
 	};
 
 	return (
@@ -544,50 +591,18 @@ export default function WriterDashboardClient({
 							</div>
 
 							<div className="mb-6">
-								<Label htmlFor="featuredImage">{t("featuredImage")}</Label>
-								<div className="flex items-center space-x-2">
-									<Input
-										id="featuredImage"
-										name="featuredImage"
-										type="file"
-										onChange={handleFileChange}
-										ref={fileInputRef}
-										accept="image/*"
-										className="flex-grow"
-									/>
-									<Button
-										type="button"
-										variant="outline"
-										onClick={() => fileInputRef.current?.click()}>
-										<Upload className="mr-2 h-4 w-4" />
-										{t("uploadImage")}
-									</Button>
-								</div>
-								{formData.featuredImage && (
-									<p className="mt-2 text-sm text-gray-500">
-										{t("selectedFile")}: {formData.featuredImage.name}
-									</p>
-								)}
-								{isEditMode &&
-									editingArticle?.featuredImage &&
-									!formData.featuredImage && (
-										<div className="mt-2">
-											<p className="text-sm text-gray-500 mb-2">
-												{t("currentImage")}:
-											</p>
-											<div className="relative w-32 h-32">
-												<Image
-													src={
-														editingArticle.featuredImage || "/placeholder.svg"
-													}
-													alt={t("currentFeaturedImage")}
-													fill
-													className="object-cover rounded"
-													sizes="128px"
-												/>
-											</div>
-										</div>
-									)}
+								<CloudinaryUploader
+									value={imagePreview as any}
+									onChange={(url) => {
+										setImagePreview(url);
+										// We don't need to set formData.featuredImage anymore as we're directly getting the URL
+									}}
+									onClear={() => {
+										setImagePreview(null);
+										setFormData((prev) => ({ ...prev, featuredImage: null }));
+									}}
+									label={t("featuredImage")}
+								/>
 							</div>
 
 							<Button type="submit">
@@ -610,75 +625,82 @@ export default function WriterDashboardClient({
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{articles.map((article: Article | any, index: number) => (
-										<TableRow key={article.id}>
-											<TableCell>{index + 1}</TableCell>
-											<TableCell>
-												{article.featuredImage && (
-													<div className="relative w-12 h-12">
-														<Image
-															src={article.featuredImage || "/placeholder.svg"}
-															alt={t("featuredImage")}
-															fill
-															className="object-cover rounded"
-															sizes="48px"
-															unoptimized
-														/>
+									{articles
+										.filter((article: any) => article.status !== "DISABLED")
+										.map((article: Article | any, index: number) => (
+											<TableRow key={article.id}>
+												<TableCell>{index + 1}</TableCell>
+												<TableCell>
+													{article.featuredImage && (
+														<div className="relative w-12 h-12">
+															<Image
+																src={
+																	getOptimizedImageUrl(
+																		article.featuredImage,
+																		100,
+																		100
+																	) || "/placeholder.svg"
+																}
+																alt={t("featuredImage")}
+																fill
+																className="object-cover rounded"
+																sizes="48px"
+															/>
+														</div>
+													)}
+												</TableCell>
+												<TableCell className="font-medium">
+													{typeof article.title === "string"
+														? JSON.parse(article.title)[language] ||
+														  JSON.parse(article.title).en
+														: article.title[
+																language as keyof typeof article.title
+														  ] || article.title.en}
+												</TableCell>
+												<TableCell>
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={() => handleView(article)}>
+														<Eye className="mr-2 h-4 w-4" />
+														{t("view")}
+													</Button>
+												</TableCell>
+												<TableCell>
+													{new Date(article.createdAt).toLocaleDateString()}
+												</TableCell>
+												<TableCell>
+													<span
+														className={`px-2 py-1 rounded-full text-xs font-semibold ${
+															article.status === "APPROVED"
+																? "bg-green-100 text-green-800"
+																: article.status === "REJECTED"
+																? "bg-red-100 text-red-800"
+																: "bg-yellow-100 text-yellow-800"
+														}`}>
+														{t(article.status.toLowerCase())}
+													</span>
+												</TableCell>
+												<TableCell>
+													<div className="flex space-x-2">
+														<Button
+															variant="ghost"
+															size="sm"
+															onClick={() => handleEdit(article)}>
+															<Pencil className="mr-2 h-4 w-4" />
+															{t("edit")}
+														</Button>
+														<Button
+															variant="ghost"
+															size="sm"
+															onClick={() => handleDelete(article.id)}>
+															<Trash2 className="mr-2 h-4 w-4" />
+															{t("delete")}
+														</Button>
 													</div>
-												)}
-											</TableCell>
-											<TableCell className="font-medium">
-												{typeof article.title === "string"
-													? JSON.parse(article.title)[language] ||
-													  JSON.parse(article.title).en
-													: article.title[
-															language as keyof typeof article.title
-													  ] || article.title.en}
-											</TableCell>
-											<TableCell>
-												<Button
-													variant="ghost"
-													size="sm"
-													onClick={() => handleView(article)}>
-													<Eye className="mr-2 h-4 w-4" />
-													{t("view")}
-												</Button>
-											</TableCell>
-											<TableCell>
-												{new Date(article.createdAt).toLocaleDateString()}
-											</TableCell>
-											<TableCell>
-												<span
-													className={`px-2 py-1 rounded-full text-xs font-semibold ${
-														article.status === "APPROVED"
-															? "bg-green-100 text-green-800"
-															: article.status === "REJECTED"
-															? "bg-red-100 text-red-800"
-															: "bg-yellow-100 text-yellow-800"
-													}`}>
-													{t(article.status.toLowerCase())}
-												</span>
-											</TableCell>
-											<TableCell>
-												<div className="flex space-x-2">
-													<Button
-														variant="ghost"
-														size="sm"
-														onClick={() => handleEdit(article)}>
-														<Pencil className="mr-2 h-4 w-4" />
-														{t("edit")}
-													</Button>
-													<Button
-														variant="ghost"
-														size="sm"
-														onClick={() => handleDelete(article.id)}>
-														<Trash2 className="mr-2 h-4 w-4" />
-														{t("delete")}
-													</Button>
-												</div>
-											</TableCell>
-										</TableRow>
-									))}
+												</TableCell>
+											</TableRow>
+										))}
 								</TableBody>
 							</Table>
 						</div>
@@ -707,12 +729,17 @@ export default function WriterDashboardClient({
 								{viewingArticle?.featuredImage && (
 									<div className="relative w-full h-48 mb-4">
 										<Image
-											src={viewingArticle.featuredImage || "/placeholder.svg"}
+											src={
+												getOptimizedImageUrl(
+													viewingArticle.featuredImage,
+													600,
+													400
+												) || "/placeholder.svg"
+											}
 											alt={t("featuredImage")}
 											fill
 											className="object-cover rounded"
 											sizes="(max-width: 768px) 100vw, 600px"
-											unoptimized
 										/>
 									</div>
 								)}
@@ -740,7 +767,9 @@ export default function WriterDashboardClient({
 
 // "use client";
 
-// import { useState, useRef } from "react";
+// import type React from "react";
+
+// import { useState, useRef, useEffect } from "react";
 // import { useRouter } from "next/navigation";
 // import { useLanguage } from "@/contexts/LanguageContext";
 // import { Button } from "@/components/ui/button";
@@ -764,6 +793,7 @@ export default function WriterDashboardClient({
 // 	Pencil,
 // 	Trash2,
 // 	Upload,
+// 	X,
 // } from "lucide-react";
 // import { useToast } from "@/hooks/use-toast";
 // import {
@@ -786,10 +816,8 @@ export default function WriterDashboardClient({
 // import {
 // 	Dialog,
 // 	DialogContent,
-// 	DialogDescription,
 // 	DialogHeader,
 // 	DialogTitle,
-// 	DialogTrigger,
 // 	DialogFooter,
 // } from "@/components/ui/dialog";
 // import Image from "next/image";
@@ -818,6 +846,7 @@ export default function WriterDashboardClient({
 // 	tags: any;
 // 	categoryId: string;
 // 	subcategoryId: string;
+// 	featuredImage?: string;
 // }
 
 // interface User {
@@ -844,12 +873,13 @@ export default function WriterDashboardClient({
 // 	const [categories, setCategories] = useState<Category[]>(initialCategories);
 // 	const [subcategories, setSubcategories] = useState<Category[]>([]);
 // 	const [selectedLanguage, setSelectedLanguage] = useState("en");
-
+// 	const [isEditMode, setIsEditMode] = useState(false);
 // 	const [editingArticle, setEditingArticle] = useState<Article | null>(null);
 // 	const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 // 	const [viewingArticle, setViewingArticle] = useState<Article | null | any>(
 // 		null
 // 	);
+// 	const [activeTab, setActiveTab] = useState("newArticle");
 
 // 	const [formData, setFormData] = useState({
 // 		title: { en: "", am: "", om: "" },
@@ -861,6 +891,26 @@ export default function WriterDashboardClient({
 // 	});
 
 // 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+// 	// Load subcategories when editing an article
+// 	useEffect(() => {
+// 		if (editingArticle && editingArticle.categoryId) {
+// 			fetchSubcategories(editingArticle.categoryId);
+// 		}
+// 	}, [editingArticle]);
+
+// 	const fetchSubcategories = async (categoryId: string) => {
+// 		try {
+// 			const res = await fetch(`/api/subcategories?categoryId=${categoryId}`);
+// 			if (!res.ok) {
+// 				throw new Error("Failed to fetch subcategories");
+// 			}
+// 			const data = await res.json();
+// 			setSubcategories(data);
+// 		} catch (error) {
+// 			console.error("Error fetching subcategories:", error);
+// 		}
+// 	};
 
 // 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 // 		if (e.target.files && e.target.files[0]) {
@@ -887,15 +937,22 @@ export default function WriterDashboardClient({
 
 // 	const handleCategoryChange = async (value: string) => {
 // 		setFormData((prev) => ({ ...prev, categoryId: value, subcategoryId: "" }));
-// 		try {
-// 			const res = await fetch(`/api/subcategories?categoryId=${value}`);
-// 			if (!res.ok) {
-// 				throw new Error("Failed to fetch subcategories");
-// 			}
-// 			const data = await res.json();
-// 			setSubcategories(data);
-// 		} catch (error) {
-// 			console.error("Error fetching subcategories:", error);
+// 		fetchSubcategories(value);
+// 	};
+
+// 	const resetForm = () => {
+// 		setFormData({
+// 			title: { en: "", am: "", om: "" },
+// 			content: { en: "", am: "", om: "" },
+// 			categoryId: "",
+// 			subcategoryId: "",
+// 			tags: "",
+// 			featuredImage: null,
+// 		});
+// 		setIsEditMode(false);
+// 		setEditingArticle(null);
+// 		if (fileInputRef.current) {
+// 			fileInputRef.current.value = "";
 // 		}
 // 	};
 
@@ -906,68 +963,116 @@ export default function WriterDashboardClient({
 // 			formDataToSend.append("title", JSON.stringify(formData.title));
 // 			formDataToSend.append("content", JSON.stringify(formData.content));
 // 			formDataToSend.append("categoryId", formData.categoryId);
-// 			formDataToSend.append("subcategoryId", formData.subcategoryId);
+// 			formDataToSend.append("subcategoryId", formData.subcategoryId || "");
 // 			formDataToSend.append("tags", formData.tags);
 // 			formDataToSend.append("authorId", user.id);
+
 // 			if (formData.featuredImage) {
 // 				formDataToSend.append("featuredImage", formData.featuredImage);
 // 			}
 
-// 			const res = await fetch("/api/writer/articles", {
-// 				method: "POST",
-// 				body: formDataToSend,
-// 			});
-// 			if (!res.ok) {
-// 				throw new Error("Failed to submit article");
-// 			}
-// 			const newArticle = await res.json();
-// 			setArticles([newArticle, ...articles]);
-// 			setFormData({
-// 				title: { en: "", am: "", om: "" },
-// 				content: { en: "", am: "", om: "" },
-// 				categoryId: "",
-// 				subcategoryId: "",
-// 				tags: "",
-// 				featuredImage: null,
-// 			});
-// 			if (fileInputRef.current) {
-// 				fileInputRef.current.value = "";
+// 			let url = "/api/writer/articles";
+// 			let method = "POST";
+
+// 			// If in edit mode, use PUT method and include article ID
+// 			if (isEditMode && editingArticle) {
+// 				url = `/api/writer/articles/${editingArticle.id}`;
+// 				method = "PUT";
+// 				formDataToSend.append("id", editingArticle.id);
 // 			}
 
-// 			toast({
-// 				title: t("articleSubmitted"),
-// 				description: t("articleSubmittedDescription"),
-// 				duration: 5000,
+// 			const res = await fetch(url, {
+// 				method: method,
+// 				body: formDataToSend,
 // 			});
+
+// 			if (!res.ok) {
+// 				throw new Error(
+// 					`Failed to ${isEditMode ? "update" : "submit"} article`
+// 				);
+// 			}
+
+// 			const responseData = await res.json();
+
+// 			if (isEditMode) {
+// 				// Update the article in the articles array
+// 				setArticles(
+// 					articles.map((article: Article) =>
+// 						article.id === editingArticle?.id ? responseData : article
+// 					)
+// 				);
+// 				toast({
+// 					title: t("articleUpdated"),
+// 					description: t("articleUpdatedDescription"),
+// 					duration: 5000,
+// 				});
+// 			} else {
+// 				// Add the new article to the articles array
+// 				setArticles([responseData, ...articles]);
+// 				toast({
+// 					title: t("articleSubmitted"),
+// 					description: t("articleSubmittedDescription"),
+// 					duration: 5000,
+// 				});
+// 			}
+
+// 			// Reset form and state
+// 			resetForm();
+
+// 			// Switch to My Articles tab after submission
+// 			setActiveTab("myArticles");
 // 		} catch (error) {
-// 			console.error("Error submitting article:", error);
+// 			console.error(
+// 				`Error ${isEditMode ? "updating" : "submitting"} article:`,
+// 				error
+// 			);
 // 			toast({
-// 				title: t("errorSubmittingArticle"),
-// 				description: t("errorSubmittingArticleDescription"),
+// 				title: isEditMode
+// 					? t("errorUpdatingArticle")
+// 					: t("errorSubmittingArticle"),
+// 				description: isEditMode
+// 					? t("errorUpdatingArticleDescription")
+// 					: t("errorSubmittingArticleDescription"),
 // 				variant: "destructive",
 // 				duration: 5000,
 // 			});
 // 		}
 // 	};
 
-// 	const handleEdit = (article: Article) => {
+// 	const handleEdit = async (article: Article) => {
+// 		setIsEditMode(true);
 // 		setEditingArticle(article);
+// 		setActiveTab("newArticle");
+
+// 		// Parse title and content if they are strings
+// 		const parsedTitle =
+// 			typeof article.title === "string"
+// 				? JSON.parse(article.title)
+// 				: article.title;
+
+// 		const parsedContent =
+// 			typeof article.content === "string"
+// 				? JSON.parse(article.content)
+// 				: article.content;
+
+// 		// Set form data with article values
 // 		setFormData({
-// 			title:
-// 				typeof article.title === "string"
-// 					? JSON.parse(article.title)
-// 					: article.title,
-// 			content:
-// 				typeof article.content === "string"
-// 					? JSON.parse(article.content)
-// 					: article.content,
+// 			title: parsedTitle,
+// 			content: parsedContent,
 // 			categoryId: article.categoryId || "",
 // 			subcategoryId: article.subcategoryId || "",
 // 			tags: article.tags
-// 				? article.tags.map((tag: any) => tag.name).join(", ")
+// 				? Array.isArray(article.tags)
+// 					? article.tags.map((tag: any) => tag.name).join(", ")
+// 					: ""
 // 				: "",
 // 			featuredImage: null,
 // 		});
+
+// 		// Load subcategories for the selected category
+// 		if (article.categoryId) {
+// 			await fetchSubcategories(article.categoryId);
+// 		}
 // 	};
 
 // 	const handleDelete = async (articleId: string) => {
@@ -1011,6 +1116,10 @@ export default function WriterDashboardClient({
 // 		} catch (error) {
 // 			console.error("Logout error:", error);
 // 		}
+// 	};
+
+// 	const cancelEdit = () => {
+// 		resetForm();
 // 	};
 
 // 	return (
@@ -1057,12 +1166,35 @@ export default function WriterDashboardClient({
 
 // 			{/* Main content */}
 // 			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-// 				<Tabs defaultValue="newArticle" className="space-y-4">
+// 				<Tabs
+// 					value={activeTab}
+// 					onValueChange={setActiveTab}
+// 					className="space-y-4">
 // 					<TabsList>
-// 						<TabsTrigger value="newArticle">{t("newArticle")}</TabsTrigger>
+// 						<TabsTrigger value="newArticle">
+// 							{isEditMode ? t("editArticle") : t("newArticle")}
+// 						</TabsTrigger>
 // 						<TabsTrigger value="myArticles">{t("myArticles")}</TabsTrigger>
 // 					</TabsList>
 // 					<TabsContent value="newArticle" className="space-y-4">
+// 						{isEditMode && (
+// 							<div className="bg-blue-50 p-4 rounded-lg mb-4 flex justify-between items-center">
+// 								<div>
+// 									<h3 className="font-medium text-blue-800">
+// 										{t("editingArticle")}
+// 									</h3>
+// 									<p className="text-sm text-blue-600">
+// 										{typeof editingArticle?.title === "string"
+// 											? JSON.parse(editingArticle?.title).en
+// 											: editingArticle?.title?.en}
+// 									</p>
+// 								</div>
+// 								<Button variant="ghost" size="sm" onClick={cancelEdit}>
+// 									<X className="mr-2 h-4 w-4" />
+// 									{t("cancelEdit")}
+// 								</Button>
+// 							</div>
+// 						)}
 // 						<form
 // 							onSubmit={handleSubmit}
 // 							className="bg-white shadow-sm rounded-lg p-6">
@@ -1170,6 +1302,7 @@ export default function WriterDashboardClient({
 // 									id="tags"
 // 									name="tags"
 // 									type="text"
+// 									value={formData.tags}
 // 									onChange={(e) =>
 // 										setFormData((prev) => ({ ...prev, tags: e.target.value }))
 // 									}
@@ -1202,9 +1335,31 @@ export default function WriterDashboardClient({
 // 										{t("selectedFile")}: {formData.featuredImage.name}
 // 									</p>
 // 								)}
+// 								{isEditMode &&
+// 									editingArticle?.featuredImage &&
+// 									!formData.featuredImage && (
+// 										<div className="mt-2">
+// 											<p className="text-sm text-gray-500 mb-2">
+// 												{t("currentImage")}:
+// 											</p>
+// 											<div className="relative w-32 h-32">
+// 												<Image
+// 													src={
+// 														editingArticle.featuredImage || "/placeholder.svg"
+// 													}
+// 													alt={t("currentFeaturedImage")}
+// 													fill
+// 													className="object-cover rounded"
+// 													sizes="128px"
+// 												/>
+// 											</div>
+// 										</div>
+// 									)}
 // 							</div>
 
-// 							<Button type="submit">{t("submitArticle")}</Button>
+// 							<Button type="submit">
+// 								{isEditMode ? t("updateArticle") : t("submitArticle")}
+// 							</Button>
 // 						</form>
 // 					</TabsContent>
 // 					<TabsContent value="myArticles" className="space-y-4">
@@ -1227,13 +1382,16 @@ export default function WriterDashboardClient({
 // 											<TableCell>{index + 1}</TableCell>
 // 											<TableCell>
 // 												{article.featuredImage && (
-// 													<Image
-// 														src={article.featuredImage}
-// 														alt={t("featuredImage")}
-// 														width={50}
-// 														height={50}
-// 														className="object-cover rounded"
-// 													/>
+// 													<div className="relative w-12 h-12">
+// 														<Image
+// 															src={article.featuredImage || "/placeholder.svg"}
+// 															alt={t("featuredImage")}
+// 															fill
+// 															className="object-cover rounded"
+// 															sizes="48px"
+// 															unoptimized
+// 														/>
+// 													</div>
 // 												)}
 // 											</TableCell>
 // 											<TableCell className="font-medium">
@@ -1314,13 +1472,16 @@ export default function WriterDashboardClient({
 // 									{new Date(viewingArticle.createdAt).toLocaleDateString()}
 // 								</p>
 // 								{viewingArticle?.featuredImage && (
-// 									<Image
-// 										src={viewingArticle.featuredImage}
-// 										alt={t("featuredImage")}
-// 										width={300}
-// 										height={200}
-// 										className="object-cover rounded mb-4"
-// 									/>
+// 									<div className="relative w-full h-48 mb-4">
+// 										<Image
+// 											src={viewingArticle.featuredImage || "/placeholder.svg"}
+// 											alt={t("featuredImage")}
+// 											fill
+// 											className="object-cover rounded"
+// 											sizes="(max-width: 768px) 100vw, 600px"
+// 											unoptimized
+// 										/>
+// 									</div>
 // 								)}
 // 								<div className="prose max-w-none">
 // 									{typeof viewingArticle.content === "string"
