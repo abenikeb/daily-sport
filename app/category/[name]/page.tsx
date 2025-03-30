@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoginRequiredDialog } from "@components/login-required-dialog";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 const subcategories = [
 	{ name: "football", icon: "/assets/icons/football.svg" },
@@ -38,13 +41,18 @@ const MAX_DESCRIPTION_LENGTH = 100;
 
 export default function CategoryPage({ params }: { params: { name: string } }) {
 	const { t, language } = useLanguage();
+	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
+	const { isAuthenticated, isLoading: authLoading } = useAuth();
+	const [selectedArticleUrl, setSelectedArticleUrl] = useState("");
+	const [featuredArticles, setFeaturedArticles] = useState<Article[]>([]);
 	const [articles, setArticles] = useState<Article[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [page, setPage] = useState(1);
 	const [hasMore, setHasMore] = useState(true);
 	const observer = useRef<IntersectionObserver | null>(null);
+	const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
 	const lastArticleElementRef = useCallback(
 		(node: HTMLDivElement | null) => {
@@ -65,19 +73,27 @@ export default function CategoryPage({ params }: { params: { name: string } }) {
 			try {
 				setIsLoading(true);
 				const res = await fetch(
-					`/api/articles?page=${page}&category=${params.name}&search=${searchQuery}`
+					`/api/articles?page=${page}&category=${params.name}${
+						searchQuery ? `&search=${searchQuery}` : ""
+					}`
 				);
+				// const res = await fetch(
+				// 	`/api/articles?page=${page}&category=${params.name}&search=${searchQuery}`
+				// );
 
 				if (!res.ok) {
 					throw new Error("Failed to fetch articles");
 				}
 				const data = await res.json();
 
-				if (page === 1) {
-					setArticles(data.articles);
-				} else {
-					setArticles((prevArticles) => [...prevArticles, ...data.articles]);
-				}
+				// Fetch view counts for articles
+				await fetchArticleViewCounts(data.articles);
+
+				// if (page === 1) {
+				// 	setArticles(data.articles);
+				// } else {
+				// 	setArticles((prevArticles) => [...prevArticles, ...data.articles]);
+				// }
 
 				setHasMore(data.hasMore);
 				setError(null);
@@ -98,6 +114,71 @@ export default function CategoryPage({ params }: { params: { name: string } }) {
 		return () => clearTimeout(timer);
 	}, [page, params.name, searchQuery]);
 
+	// Add this function after the fetchArticles function in the useEffect
+	async function fetchArticleViewCounts(articlesData: Article[]) {
+		try {
+			const viewCountPromises = articlesData.map(async (article) => {
+				const response = await fetch(
+					`/api/articles/view?articleId=${article.id}`,
+					{
+						method: "GET",
+					}
+				);
+
+				console.log({
+					response,
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					return {
+						...article,
+						viewCount: data.viewCount || 0,
+						uniqueViewCount: data.uniqueViewCount || 0,
+					};
+				}
+				return article;
+			});
+
+			const articlesWithViewCounts = await Promise.all(viewCountPromises);
+
+			if (page === 1) {
+				setArticles(articlesWithViewCounts);
+
+				// Update featured articles with view counts
+				if (articlesWithViewCounts.length > 0) {
+					// Sort articles by viewCount in descending order
+					const sortedArticles = [...articlesWithViewCounts].sort(
+						(a: Article, b: Article) => {
+							// Ensure viewCount exists and is a number for comparison
+							const viewCountA =
+								typeof a.viewCount === "number" ? a.viewCount : -Infinity;
+							const viewCountB =
+								typeof b.viewCount === "number" ? b.viewCount : -Infinity;
+							return viewCountB - viewCountA;
+						}
+					);
+
+					// Take the first article from the sorted list (highest viewCount)
+					const highestViewCountArticle = sortedArticles[0];
+
+					// Set featured articles to an array containing only the highest view count article
+					if (highestViewCountArticle) {
+						setFeaturedArticles([highestViewCountArticle]);
+					} else {
+						setFeaturedArticles([]);
+					}
+				} else {
+					setFeaturedArticles([]);
+				}
+			} else {
+				setArticles((prev) => [...prev, ...articlesWithViewCounts]);
+			}
+		} catch (error) {
+			console.error("Error fetching view counts:", error);
+		}
+	}
+
 	const getLocalizedContent = (content: LocalizedContent) => {
 		return content[language as keyof LocalizedContent] || content.en || "";
 	};
@@ -107,25 +188,24 @@ export default function CategoryPage({ params }: { params: { name: string } }) {
 		return text.slice(0, maxLength) + "...";
 	};
 
-	return (
-		<div className="w-full bg-gray-50 min-h-screen flex flex-col">
-			{/* Header */}
-			{/* <header className="sticky top-0 bg-white p-4 flex justify-between items-center border-b border-gray-200 shadow-sm z-10">
-				<Link href="/">
-					<Button variant="ghost" size="icon">
-						<ArrowLeft className="w-6 h-6 text-gray-700" />
-						<span className="sr-only">{t("back")}</span>
-					</Button>
-				</Link>
-				<h1 className="text-xl font-bold capitalize text-gray-800">
-					{t(params.name)}
-				</h1>
-				<Button variant="ghost" size="icon">
-					<Search className="w-6 h-6 text-gray-700" />
-					<span className="sr-only">{t("search")}</span>
-				</Button>
-			</header> */}
+	const handleArticleClick = (articleId: string, event: React.MouseEvent) => {
+		event.preventDefault();
 
+		const articleUrl = `/article/${articleId}`;
+
+		// Check if user is authenticated
+		if (isAuthenticated === false) {
+			// Show login dialog
+			setSelectedArticleUrl(articleUrl);
+			setLoginDialogOpen(true);
+		} else {
+			// User is authenticated or auth is still loading, proceed to article
+			router.push(articleUrl);
+		}
+	};
+
+	return (
+		<div className="w-full bg-gray-50 min-h-screen flex flex-col pb-10">
 			{/* Search Bar */}
 			<div className="p-4 bg-white shadow-sm">
 				<Input
@@ -193,7 +273,9 @@ export default function CategoryPage({ params }: { params: { name: string } }) {
 								ref={
 									index === articles.length - 1 ? lastArticleElementRef : null
 								}>
-								<Link href={`/article/${article.id}`}>
+								<Link
+									href={`/article/${article.id}`}
+									onClick={(e) => handleArticleClick(article.id, e)}>
 									<div className="bg-white p-4 rounded-lg flex space-x-4 shadow-sm hover:shadow-md transition-all hover:scale-102">
 										<div className="relative w-20 h-20 rounded-lg flex-shrink-0 overflow-hidden">
 											<Image
@@ -249,6 +331,13 @@ export default function CategoryPage({ params }: { params: { name: string } }) {
 				)}
 
 				{error && <div className="text-center text-red-500 p-4">{error}</div>}
+
+				{/* Login Required Dialog */}
+				<LoginRequiredDialog
+					isOpen={loginDialogOpen}
+					onClose={() => setLoginDialogOpen(false)}
+					articleUrl={selectedArticleUrl}
+				/>
 			</div>
 		</div>
 	);

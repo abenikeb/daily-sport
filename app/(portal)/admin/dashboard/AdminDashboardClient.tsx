@@ -304,6 +304,42 @@ export default function AdminDashboard({
 						: t("articleRejectedDescription"),
 				duration: 5000,
 			});
+
+			// Send notification to external API when article is approved
+			if (newStatus === "APPROVED") {
+				try {
+					// Get the article details
+					const article = updatedArticle;
+
+					// Parse the title and content if they are strings
+					const parsedContent =
+						typeof article.content === "string"
+							? JSON.parse(article.content)
+							: article.content;
+
+					// Get the Amharic content
+					const amharicContent = parsedContent.am || parsedContent.en;
+
+					// Get the image URL
+					const imageUrl = article.featuredImage || "";
+
+					// Send notification to external API
+					await fetch("/api/notifications/article-approved", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							articleId: article.id,
+							text: amharicContent,
+							imageUrl: imageUrl,
+						}),
+					});
+
+					console.log("Notification sent for approved article");
+				} catch (notificationError) {
+					console.error("Error sending notification:", notificationError);
+					// We don't want to show an error toast for this as it's a background operation
+				}
+			}
 		} catch (error) {
 			console.error("Error reviewing article:", error);
 			toast({
